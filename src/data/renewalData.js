@@ -2,11 +2,13 @@
 // renewalData.js — swap these exports for API calls to connect real data
 // ---------------------------------------------------------------------------
 
+export const deckUrl = '';  // paste Google Slides ?embedded=true URL here to activate
+
 export const renewal = {
   vendor: 'LeanData',
   vendorLogo: 'https://www.google.com/s2/favicons?domain=leandata.com&sz=128',
   product: 'LeanData Platform',
-  renewalDate: '2026-06-23',
+  renewalDate: '2026-07-23',
   contractStart: '2025-06-23',
   buyerCompany: 'Uber',
   buyerLogo: 'https://www.google.com/s2/favicons?domain=uber.com&sz=128',
@@ -67,9 +69,15 @@ export const orderForm = {
   ],
   priceNote: 'List price $30.00/user/year · ~9.3% negotiated discount · billed annually',
   pricingJustification: 'Reflects a standard 5% annual seat-price increase over the prior term ($26.00 → $27.20/user/year), applied at renewal per enterprise agreement terms. Multi-year pricing available upon request.',
+  prevTotal: '$6,476',
   total: '$6,800',
+  msaUrl: 'https://www.leandata.com/legal/msa',
+  keyChanges: [
+    'Auto-renewal clause added (60-day written notice required)',
+    'Data Processing Agreement updated to 2024 SCCs',
+  ],
   footer: 'Standard Support is included with every LeanData Subscription — see leandata.com/services',
-  redlineDiffs: [
+  highlightDiffs: [
     {
       type: 'added',
       title: 'Auto-Renewal Clause',

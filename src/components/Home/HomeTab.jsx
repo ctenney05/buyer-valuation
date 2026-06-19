@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Zap, CheckCircle } from 'lucide-react';
+import { Zap, CalendarDays } from 'lucide-react';
 import {
   renewal, contractStats, utilization,
   orderForm, buyerTeam, sellerContacts,
@@ -191,14 +191,74 @@ function UtilizationList() {
 
 // ── Center column ─────────────────────────────────────────────────────────────
 
-const REDLINE_COLORS = {
+function WhatChangedCard() {
+  return (
+    <div
+      className="rounded-xl p-5"
+      style={{
+        background: 'var(--surface-card)',
+        border: '1px solid var(--border-default)',
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
+      <p
+        className="text-[11px] font-bold uppercase tracking-widest mb-3"
+        style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-strong)' }}
+      >
+        What's changed
+      </p>
+      <div className="space-y-2.5">
+        {/* Price */}
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="flex-shrink-0 text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+            Price
+          </span>
+          <span className="text-[12px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-body)' }}>
+            {orderForm.prevTotal} → <strong>{orderForm.total}</strong>
+            <span style={{ color: 'var(--clay-600)' }}> ↑ 5%</span>
+          </span>
+        </div>
+
+        {/* Terms */}
+        {orderForm.keyChanges.map((change, i) => (
+          <div key={i} className="flex items-start justify-between gap-4">
+            <span className="flex-shrink-0 text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)', minWidth: 48 }}>
+              {i === 0 ? 'Terms' : ''}
+            </span>
+            <span className="text-right text-[12px]" style={{ color: 'var(--text-body)' }}>
+              {change}
+            </span>
+          </div>
+        ))}
+
+        {/* MSA */}
+        <div className="flex items-baseline justify-between gap-4">
+          <span className="flex-shrink-0 text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+            Agreement
+          </span>
+          <a
+            href={orderForm.msaUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[12px]"
+            style={{ color: 'var(--clay-600)', textDecoration: 'underline' }}
+          >
+            Master Software Agreement ↗
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const HIGHLIGHT_COLORS = {
   removed: { headerBg: '#FECACA', bg: '#FEF2F2', bd: '#FECACA', fg: '#DC2626', tag: 'Clause Removed' },
   added:   { headerBg: '#BBF7D0', bg: '#F0FDF4', bd: '#BBF7D0', fg: '#16A34A', tag: 'Clause Added'   },
   changed: { headerBg: 'var(--clay-200)', bg: 'var(--clay-100)', bd: 'var(--clay-200)', fg: 'var(--clay-700)', tag: 'Clause Updated' },
 };
 
 function ProposedChanges({ selectedOption, onOptionChange }) {
-  const [redlinesOn, setRedlinesOn] = useState(false);
+  const [highlightsOn, setHighlightsOn] = useState(false);
 
   return (
     <div
@@ -219,7 +279,7 @@ function ProposedChanges({ selectedOption, onOptionChange }) {
             className="text-[22px] font-semibold"
             style={{ fontFamily: 'var(--font-serif)', color: 'var(--text-strong)' }}
           >
-            Proposed Order Form
+            Order Form
           </h2>
           <span
             className="text-[10px] font-semibold tracking-wide px-2 py-0.5 rounded-full uppercase"
@@ -233,16 +293,16 @@ function ProposedChanges({ selectedOption, onOptionChange }) {
           </span>
         </div>
         <button
-          onClick={() => setRedlinesOn((v) => !v)}
+          onClick={() => setHighlightsOn((v) => !v)}
           className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors"
           style={
-            redlinesOn
+            highlightsOn
               ? { background: 'var(--clay-600)', borderColor: 'var(--clay-600)', color: '#fff' }
               : { background: 'transparent', borderColor: 'var(--border-default)', color: 'var(--text-muted)' }
           }
         >
           <span className="w-1.5 h-1.5 rounded-full bg-current" />
-          Redlines {redlinesOn ? 'ON' : 'OFF'}
+          Highlights {highlightsOn ? 'ON' : 'OFF'}
         </button>
       </div>
 
@@ -275,7 +335,7 @@ function ProposedChanges({ selectedOption, onOptionChange }) {
       </div>
 
       {/* Redline legend */}
-      {redlinesOn && (
+      {highlightsOn && (
         <div
           className="px-6 py-2 flex items-center gap-4"
           style={{ borderBottom: '1px solid var(--border-subtle)' }}
@@ -283,7 +343,7 @@ function ProposedChanges({ selectedOption, onOptionChange }) {
           <span className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
             Changes vs. prior term:
           </span>
-          {Object.entries(REDLINE_COLORS).map(([key, s]) => (
+          {Object.entries(HIGHLIGHT_COLORS).map(([key, s]) => (
             <span
               key={key}
               className="text-[11px] font-semibold"
@@ -447,10 +507,10 @@ function ProposedChanges({ selectedOption, onOptionChange }) {
           </div>
 
           {/* Redline diffs overlay */}
-          {redlinesOn && (
+          {highlightsOn && (
             <div className="mt-4 pt-4 space-y-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-              {orderForm.redlineDiffs.map((d, i) => {
-                const s = REDLINE_COLORS[d.type] ?? REDLINE_COLORS.changed;
+              {orderForm.highlightDiffs.map((d, i) => {
+                const s = HIGHLIGHT_COLORS[d.type] ?? HIGHLIGHT_COLORS.changed;
                 return (
                   <div key={i} className="rounded-lg overflow-hidden" style={{ border: `1px solid ${s.bd}` }}>
                     <div className="px-3 py-1.5 flex items-center gap-1.5" style={{ background: s.headerBg }}>
@@ -484,160 +544,6 @@ function ProposedChanges({ selectedOption, onOptionChange }) {
           {orderForm.footer}
         </p>
       </div>
-    </div>
-  );
-}
-
-// ── Right column ──────────────────────────────────────────────────────────────
-
-function ConfirmRenewCard({ onRenew, renewed, selectedOption }) {
-  const [confirming, setConfirming] = useState(false);
-  const [submitHovered, setSubmitHovered] = useState(false);
-  const [btnHovered, setBtnHovered] = useState(false);
-
-  if (renewed) {
-    return (
-      <div
-        className="rounded-xl p-4 flex items-center gap-3"
-        style={{
-          background: 'var(--success-100)',
-          border: '1px solid var(--success-600)',
-          boxShadow: 'var(--shadow-sm)',
-        }}
-      >
-        <CheckCircle className="w-5 h-5 flex-shrink-0" style={{ color: 'var(--success-600)' }} />
-        <div>
-          <p className="text-[14px] font-semibold leading-tight" style={{ fontFamily: 'var(--font-serif)', color: 'var(--success-600)' }}>
-            Renewal Submitted
-          </p>
-          <p className="text-[11px] mt-0.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--success-600)', opacity: 0.8 }}>
-            Your agreement is on its way to DocuSign.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (confirming) {
-    const opt = orderForm.renewalOptions[selectedOption];
-    return (
-      <div
-        className="rounded-xl p-4"
-        style={{
-          background: 'var(--success-100)',
-          border: '1px solid var(--success-600)',
-          boxShadow: 'var(--shadow-sm)',
-        }}
-      >
-        <p
-          className="text-[16px] font-semibold mb-3"
-          style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-700)' }}
-        >
-          Review &amp; confirm
-        </p>
-
-        {/* Condensed order summary */}
-        <div
-          className="rounded-lg overflow-hidden mb-3"
-          style={{ border: '1px solid var(--success-600)', background: 'rgba(255,255,255,0.55)' }}
-        >
-          {[
-            { label: 'Vendor', value: renewal.vendor },
-            { label: 'Quote', value: orderForm.quoteNumber },
-            { label: 'Option', value: `${opt.label} · ${opt.price}` },
-            ...orderForm.lineItems.map((item) => ({ label: item.product, value: item.finalPrice })),
-          ].map((row, i, arr) => (
-            <div
-              key={row.label}
-              className="flex items-center justify-between px-3 py-1.5"
-              style={i < arr.length - 1 ? { borderBottom: '1px solid rgba(0,0,0,0.07)' } : undefined}
-            >
-              <span className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
-                {row.label}
-              </span>
-              <span className="text-[11px] font-semibold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)' }}>
-                {row.value}
-              </span>
-            </div>
-          ))}
-          <div
-            className="flex items-center justify-between px-3 py-2"
-            style={{ borderTop: '1px solid var(--success-600)', background: 'rgba(255,255,255,0.4)' }}
-          >
-            <span className="text-[11px] font-bold uppercase tracking-wide" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)' }}>
-              Total
-            </span>
-            <span className="text-[13px] font-bold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)' }}>
-              {orderForm.total}
-            </span>
-          </div>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => setConfirming(false)}
-            className="flex-1 rounded-lg py-2 text-[13px] font-medium"
-            style={{
-              border: '1px solid var(--border-default)',
-              background: 'transparent',
-              color: 'var(--text-muted)',
-              cursor: 'pointer',
-            }}
-            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
-            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-          >
-            Cancel
-          </button>
-          <button
-            onClick={onRenew}
-            onMouseEnter={() => setSubmitHovered(true)}
-            onMouseLeave={() => setSubmitHovered(false)}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-semibold"
-            style={{
-              background: submitHovered ? '#15803D' : 'var(--success-600)',
-              color: '#fff',
-              border: 'none',
-              cursor: 'pointer',
-            }}
-          >
-            <CheckCircle className="w-3.5 h-3.5" />
-            Submit Renewal
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className="rounded-xl p-4"
-      style={{
-        background: 'var(--surface-card)',
-        border: '1px solid var(--border-default)',
-        boxShadow: 'var(--shadow-sm)',
-      }}
-    >
-      <p
-        className="text-[11px] mb-3 uppercase tracking-widest"
-        style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}
-      >
-        Ready to move forward?
-      </p>
-      <button
-        onClick={() => setConfirming(true)}
-        onMouseEnter={() => setBtnHovered(true)}
-        onMouseLeave={() => setBtnHovered(false)}
-        className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-[14px] font-semibold"
-        style={{
-          background: btnHovered ? 'var(--success-600)' : 'var(--success-100)',
-          border: '1px solid var(--success-600)',
-          color: btnHovered ? '#fff' : 'var(--success-600)',
-          cursor: 'pointer',
-        }}
-      >
-        <CheckCircle className="w-4 h-4" />
-        Confirm &amp; Renew
-      </button>
     </div>
   );
 }
@@ -719,7 +625,7 @@ function ChatbotWidget() {
     { from: 'bot', text: 'Hi — I\'m your renewal assistant. Ask me about pricing, terms, or what\'s changed since last year.' },
   ]);
 
-  const chips = ['What changed?', 'Why is it more?', 'Can we do 1 year?'];
+  const chips = ['What changed?', 'Why is it more?'];
 
   function reply(msg) {
     const m = (msg || '').toLowerCase();
@@ -730,7 +636,7 @@ function ChatbotWidget() {
     if (/seat|user|license|utiliz|usage|adopt/.test(m))
       return 'You\'re at 91% utilization on Orchestration and 78% on Scheduling. Two modules are underutilized — happy to set up enablement sessions.';
     if (/redline|diff|chang|legal/.test(m))
-      return 'Flip the Redlines toggle in the center panel to see every change with prior values struck through. The new auto-renew clause is the main legal addition.';
+      return 'Flip the Highlights toggle in the center panel to see every change with prior values struck through. The new auto-renew clause is the main legal addition.';
     return 'Good question — I\'ve flagged it for Jordan Lee, your account manager, who\'ll follow up today.';
   }
 
@@ -749,40 +655,36 @@ function ChatbotWidget() {
         background: 'var(--surface-card)',
         border: '1px solid var(--border-default)',
         boxShadow: 'var(--shadow-sm)',
-        height: 380,
+        height: 200,
       }}
     >
-      {/* Header */}
+      {/* Compact header */}
       <div
-        className="px-4 py-3.5 flex items-center gap-2.5"
+        className="px-3 py-2 flex items-center gap-2 flex-shrink-0"
         style={{ borderBottom: '1px solid var(--border-subtle)' }}
       >
         <span
-          className="w-[30px] h-[30px] rounded-full flex items-center justify-center flex-shrink-0"
+          className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
           style={{ background: 'var(--clay-100)' }}
         >
-          <Zap className="w-[17px] h-[17px]" style={{ color: 'var(--clay-500)' }} />
+          <Zap className="w-3.5 h-3.5" style={{ color: 'var(--clay-500)' }} />
         </span>
-        <div>
-          <p className="text-sm font-semibold leading-tight" style={{ color: 'var(--text-strong)' }}>
-            Renewal assistant
-          </p>
-          <p className="text-[10.5px]" style={{ fontFamily: 'var(--font-mono)', color: '#16A34A' }}>
-            ● Online
-          </p>
-        </div>
+        <p className="text-[13px] font-semibold leading-none" style={{ color: 'var(--text-strong)' }}>
+          Renewal assistant
+        </p>
+        <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: '#16A34A' }}>● Online</span>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2.5">
+      <div className="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-2">
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.from === 'user' ? 'justify-end' : 'justify-start'}`}>
             <div
-              className="max-w-[85%] px-3 py-2 text-[13px] leading-snug"
+              className="max-w-[90%] px-2.5 py-1.5 text-[12px] leading-snug"
               style={{
-                borderRadius: 13,
-                borderBottomRightRadius: m.from === 'user' ? 4 : 13,
-                borderBottomLeftRadius: m.from === 'user' ? 13 : 4,
+                borderRadius: 10,
+                borderBottomRightRadius: m.from === 'user' ? 3 : 10,
+                borderBottomLeftRadius: m.from === 'user' ? 10 : 3,
                 background: m.from === 'user' ? 'var(--clay-500)' : 'var(--surface-sunken)',
                 color: m.from === 'user' ? '#fff' : 'var(--text-body)',
                 border: m.from === 'user' ? 'none' : '1px solid var(--border-subtle)',
@@ -794,17 +696,18 @@ function ChatbotWidget() {
         ))}
       </div>
 
-      {/* Quick chips */}
-      <div className="flex gap-1.5 px-4 pb-2.5 flex-wrap">
+      {/* Quick chips — single row, no wrap */}
+      <div className="flex gap-1 px-3 pb-1.5 overflow-x-auto flex-shrink-0" style={{ scrollbarWidth: 'none' }}>
         {chips.map((c) => (
           <button
             key={c}
             onClick={() => handleSend(c)}
-            className="text-[11.5px] font-medium rounded-full px-3 py-1 transition-colors"
+            className="text-[11px] font-medium rounded-full px-2.5 py-0.5 flex-shrink-0"
             style={{
               border: '1px solid var(--border-default)',
               background: 'var(--surface-card)',
               color: 'var(--text-muted)',
+              cursor: 'pointer',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.borderColor = 'var(--clay-400)';
@@ -822,7 +725,7 @@ function ChatbotWidget() {
 
       {/* Input */}
       <div
-        className="p-3 flex gap-2 items-center"
+        className="px-3 pb-3 pt-1.5 flex gap-2 items-center flex-shrink-0"
         style={{ borderTop: '1px solid var(--border-subtle)' }}
       >
         <input
@@ -831,7 +734,7 @@ function ChatbotWidget() {
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Ask about your renewal…"
-          className="flex-1 h-9 rounded-full px-4 text-[13px] outline-none"
+          className="flex-1 h-8 rounded-full px-3 text-[12px] outline-none"
           style={{
             border: '1px solid var(--border-default)',
             fontFamily: 'var(--font-sans)',
@@ -841,12 +744,12 @@ function ChatbotWidget() {
         />
         <button
           onClick={() => handleSend()}
-          className="w-9 h-9 flex-shrink-0 rounded-full flex items-center justify-center transition-colors"
+          className="w-8 h-8 flex-shrink-0 rounded-full flex items-center justify-center"
           style={{ background: 'var(--clay-500)' }}
           onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--clay-600)')}
           onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--clay-500)')}
         >
-          <svg className="w-[17px] h-[17px]" fill="none" viewBox="0 0 24 24" style={{ color: '#fff' }}>
+          <svg className="w-[14px] h-[14px]" fill="none" viewBox="0 0 24 24" style={{ color: '#fff' }}>
             <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </button>
@@ -856,6 +759,9 @@ function ChatbotWidget() {
 }
 
 function SellerContactsPanel() {
+  const [requested, setRequested] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
   return (
     <div
       className="rounded-xl p-4"
@@ -904,15 +810,47 @@ function SellerContactsPanel() {
           </div>
         ))}
       </div>
+
+      {/* Schedule call CTA */}
+      <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+        {requested ? (
+          <div className="flex items-center gap-2.5 px-1 py-1">
+            <CalendarDays className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--ocean-600)' }} />
+            <p className="text-[12px] font-medium" style={{ color: 'var(--ocean-600)' }}>
+              Request sent — your AM will follow up shortly.
+            </p>
+          </div>
+        ) : (
+          <button
+            onClick={() => setRequested(true)}
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+            className="w-full rounded-lg px-3 py-2 flex items-center gap-2.5 text-left"
+            style={{
+              background: hovered ? 'var(--ocean-200)' : 'var(--surface-sunken)',
+              border: '1px solid var(--ocean-200)',
+              cursor: 'pointer',
+            }}
+          >
+            <CalendarDays className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--ocean-600)' }} />
+            <div>
+              <p className="text-[12.5px] font-semibold leading-tight" style={{ color: 'var(--ocean-700, var(--ocean-600))' }}>
+                Schedule a call with your AM
+              </p>
+              <p className="text-[10.5px] mt-0.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+                {sellerContacts[0]?.name ?? 'Your account manager'}
+              </p>
+            </div>
+          </button>
+        )}
+      </div>
     </div>
   );
 }
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export default function HomeTab({ onRenew, renewed }) {
-  const [selectedOption, setSelectedOption] = useState(0);
-
+export default function HomeTab({ selectedOption, onOptionChange }) {
   return (
     <div className="grid grid-cols-12 gap-5 items-start">
       <div className="col-span-3 space-y-4">
@@ -921,15 +859,17 @@ export default function HomeTab({ onRenew, renewed }) {
         <UtilizationList />
       </div>
 
-      <div className="col-span-6 self-stretch">
-        <ProposedChanges selectedOption={selectedOption} onOptionChange={setSelectedOption} />
+      <div className="col-span-6 space-y-4 self-stretch flex flex-col">
+        <WhatChangedCard />
+        <div className="flex-1">
+          <ProposedChanges selectedOption={selectedOption} onOptionChange={onOptionChange} />
+        </div>
       </div>
 
       <div className="col-span-3 space-y-4">
-        <ConfirmRenewCard onRenew={onRenew} renewed={renewed} selectedOption={selectedOption} />
         <ChatbotWidget />
-        <BuyerTeamPanel />
         <SellerContactsPanel />
+        <BuyerTeamPanel />
       </div>
     </div>
   );

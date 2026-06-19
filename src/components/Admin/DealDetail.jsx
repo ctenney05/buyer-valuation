@@ -201,7 +201,72 @@ function ProgressTracker({ progress }) {
   );
 }
 
-export default function DealDetail({ deal }) {
+const SNAPSHOT_BUCKETS = [
+  { key: 'at-risk',    label: 'At Risk',    color: '#EF4444' },
+  { key: 'monitoring', label: 'Monitoring', color: '#F59E0B' },
+  { key: 'engaged',    label: 'Engaged',    color: '#22C55E' },
+  { key: 'closed',     label: 'Closed',     color: 'var(--text-subtle)' },
+];
+
+function PortfolioSnapshot({ bucketCounts, flags, onSelect }) {
+  return (
+    <div className="rounded-xl p-5" style={cardStyle}>
+      <p
+        className="text-[11px] font-bold uppercase tracking-widest mb-3"
+        style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-strong)' }}
+      >
+        Portfolio snapshot
+      </p>
+      <div className="space-y-2">
+        {SNAPSHOT_BUCKETS.map((b) => (
+          <div key={b.key} className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: b.color }} />
+              <span className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+                {b.label}
+              </span>
+            </div>
+            <span className="text-[12px] font-semibold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-strong)' }}>
+              {bucketCounts[b.key]}
+            </span>
+          </div>
+        ))}
+      </div>
+      {flags.length > 0 && (
+        <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+          <p
+            className="text-[10px] font-bold uppercase tracking-widest mb-2"
+            style={{ fontFamily: 'var(--font-mono)', color: '#EF4444' }}
+          >
+            ⚠ Needs action
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {flags.slice(0, 5).map(d => (
+              <button
+                key={d.id}
+                onClick={() => onSelect(d.id)}
+                className="text-[11px] font-medium rounded-full px-2.5 py-1"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  background: 'rgba(239,68,68,0.08)',
+                  border: '1px solid rgba(239,68,68,0.25)',
+                  color: '#DC2626',
+                  cursor: 'pointer',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.15)')}
+                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+              >
+                {d.company} · {d.daysToRenewal}d · {d.portalViews} {d.portalViews === 1 ? 'open' : 'opens'}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function DealDetail({ deal, bucketCounts, flags, onSelect }) {
   const engagementTiles = [
     { label: 'Portal Opens',      value: deal.portalViews,   color: 'var(--text-strong)' },
     { label: 'Chatbot Messages',  value: deal.chatMessages,  color: 'var(--text-strong)' },
@@ -209,7 +274,15 @@ export default function DealDetail({ deal }) {
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 space-y-5">
+    <div className="flex-1 flex flex-col overflow-hidden">
+
+      {/* Fixed snapshot — does not scroll */}
+      <div className="px-6 pt-6 pb-4 flex-shrink-0" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+        <PortfolioSnapshot bucketCounts={bucketCounts} flags={flags} onSelect={onSelect} />
+      </div>
+
+      {/* Scrollable deal content */}
+      <div className="flex-1 overflow-y-auto p-6 space-y-5">
 
       {/* Section 1 — Header */}
       <div className="rounded-xl p-5" style={cardStyle}>
@@ -346,6 +419,7 @@ export default function DealDetail({ deal }) {
         </div>
       </div>
 
+      </div>{/* end scrollable */}
     </div>
   );
 }

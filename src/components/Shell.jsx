@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { Zap, X, CheckCircle } from 'lucide-react';
-import { renewal } from '../data/renewalData.js';
+import { X, CheckCircle } from 'lucide-react';
+import { renewal, orderForm } from '../data/renewalData.js';
 
 const TABS = [
   { id: 'home',             label: 'Home'             },
   { id: 'contract-history', label: 'Contract History' },
   { id: 'roi-calculator',   label: 'ROI Calculator'   },
+  { id: 'proposal-deck',    label: 'Proposal Deck'    },
 ];
 
 function PartyChip({ name, initials, kind }) {
@@ -46,12 +47,14 @@ function PartyChip({ name, initials, kind }) {
 }
 
 
-export default function Shell({ activeTab, onTabChange, onModeChange, onRenew, renewed, children }) {
-  const [showModal, setShowModal] = useState(false);
+export default function Shell({ activeTab, onTabChange, onModeChange, onRenew, renewed, selectedOption, children }) {
+  const [confirming, setConfirming] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [btnHovered, setBtnHovered] = useState(false);
+  const [submitHovered, setSubmitHovered] = useState(false);
 
   function handleConfirm() {
-    setShowModal(false);
+    setConfirming(false);
     if (onRenew) onRenew();
   }
 
@@ -85,14 +88,14 @@ export default function Shell({ activeTab, onTabChange, onModeChange, onRenew, r
 
           {/* Center: party chips */}
           <div className="flex-1 flex items-center justify-center gap-2.5">
-            <PartyChip name={renewal.buyerCompany} initials="UB" kind="buyer" />
+            <PartyChip name={renewal.vendor} initials="LD" kind="seller" />
             <span
               className="text-base italic"
               style={{ fontFamily: 'var(--font-serif)', color: 'var(--text-subtle)' }}
             >
               ×
             </span>
-            <PartyChip name={renewal.vendor} initials="LD" kind="seller" />
+            <PartyChip name={renewal.buyerCompany} initials="UB" kind="buyer" />
           </div>
 
           {/* Right: view toggle + quick renew */}
@@ -125,36 +128,137 @@ export default function Shell({ activeTab, onTabChange, onModeChange, onRenew, r
               </button>
             </div>
 
-            {renewed ? (
-              <div
-                className="flex items-center gap-2 font-semibold text-sm px-5 py-2 rounded-full"
-                style={{
-                  background: 'var(--surface-sunken)',
-                  color: 'var(--text-muted)',
-                  border: '1px solid var(--border-default)',
-                }}
-              >
-                <CheckCircle className="w-4 h-4" style={{ color: 'var(--success-600)' }} />
-                Renewal Submitted
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowModal(true)}
-                className="flex items-center gap-2 font-semibold text-sm px-5 py-2 rounded-full transition-colors"
-                style={{
-                  background: 'var(--clay-500)',
-                  color: '#fff',
-                  boxShadow: 'var(--shadow-sm)',
-                  outline: '2px solid var(--clay-700)',
-                  outlineOffset: '2px',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--clay-600)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--clay-500)')}
-              >
-                <Zap className="w-4 h-4" />
-                Quick Renew
-              </button>
-            )}
+            <div style={{ position: 'relative' }}>
+              {renewed ? (
+                <div
+                  className="flex items-center gap-2 font-semibold text-sm px-5 py-2 rounded-full"
+                  style={{
+                    background: 'var(--surface-sunken)',
+                    color: 'var(--text-muted)',
+                    border: '1px solid var(--border-default)',
+                  }}
+                >
+                  <CheckCircle className="w-4 h-4" style={{ color: 'var(--success-600)' }} />
+                  Renewal Submitted
+                </div>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setConfirming(!confirming)}
+                    onMouseEnter={() => setBtnHovered(true)}
+                    onMouseLeave={() => setBtnHovered(false)}
+                    className="flex items-center gap-2 font-semibold text-sm px-5 py-2 rounded-full"
+                    style={{
+                      background: btnHovered ? 'var(--success-600)' : 'var(--success-100)',
+                      color: btnHovered ? '#fff' : 'var(--success-600)',
+                      border: '1px solid var(--success-600)',
+                      boxShadow: 'var(--shadow-sm)',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <CheckCircle className="w-4 h-4" />
+                    Confirm &amp; Renew
+                  </button>
+
+                  {confirming && (
+                    <>
+                      <div
+                        className="fixed inset-0"
+                        style={{ zIndex: 90 }}
+                        onClick={() => setConfirming(false)}
+                      />
+                      <div
+                        className="rounded-xl p-4"
+                        style={{
+                          position: 'absolute',
+                          right: 0,
+                          top: 'calc(100% + 10px)',
+                          width: 320,
+                          zIndex: 100,
+                          background: 'var(--success-100)',
+                          border: '1px solid var(--success-600)',
+                          boxShadow: 'var(--shadow-lg, 0 8px 24px rgba(0,0,0,0.12))',
+                        }}
+                      >
+                        <p
+                          className="text-[16px] font-semibold mb-3"
+                          style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-700)' }}
+                        >
+                          Review &amp; confirm
+                        </p>
+
+                        <div
+                          className="rounded-lg overflow-hidden mb-3"
+                          style={{ border: '1px solid var(--success-600)', background: 'rgba(255,255,255,0.55)' }}
+                        >
+                          {(() => {
+                            const opt = orderForm.renewalOptions[selectedOption ?? 0];
+                            const rows = [
+                              { label: 'Vendor', value: renewal.vendor },
+                              { label: 'Quote',  value: orderForm.quoteNumber },
+                              { label: 'Option', value: `${opt.label} · ${opt.price}` },
+                              ...orderForm.lineItems.map((item) => ({ label: item.product, value: item.finalPrice })),
+                            ];
+                            return rows.map((row, i) => (
+                              <div
+                                key={row.label}
+                                className="flex items-center justify-between px-3 py-1.5"
+                                style={i < rows.length - 1 ? { borderBottom: '1px solid rgba(0,0,0,0.07)' } : undefined}
+                              >
+                                <span className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+                                  {row.label}
+                                </span>
+                                <span className="text-[11px] font-semibold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)', maxWidth: 180, textAlign: 'right' }}>
+                                  {row.value}
+                                </span>
+                              </div>
+                            ));
+                          })()}
+                          <div
+                            className="flex items-center justify-between px-3 py-2"
+                            style={{ borderTop: '1px solid var(--success-600)', background: 'rgba(255,255,255,0.4)' }}
+                          >
+                            <span className="text-[11px] font-bold uppercase tracking-wide" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)' }}>
+                              Total
+                            </span>
+                            <span className="text-[13px] font-bold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)' }}>
+                              {orderForm.total}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setConfirming(false)}
+                            className="flex-1 rounded-lg py-2 text-[13px] font-medium"
+                            style={{ border: '1px solid var(--border-default)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+                            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleConfirm}
+                            onMouseEnter={() => setSubmitHovered(true)}
+                            onMouseLeave={() => setSubmitHovered(false)}
+                            className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-semibold"
+                            style={{
+                              background: submitHovered ? '#15803D' : 'var(--success-600)',
+                              color: '#fff',
+                              border: 'none',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            <CheckCircle className="w-3.5 h-3.5" />
+                            Submit Renewal
+                          </button>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -219,58 +323,6 @@ export default function Shell({ activeTab, onTabChange, onModeChange, onRenew, r
         {children}
       </main>
 
-      {showModal && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50"
-          style={{ background: 'rgba(20,20,19,0.4)' }}
-        >
-          <div
-            className="rounded-xl shadow-xl p-6 max-w-sm w-full mx-4"
-            style={{
-              background: 'var(--surface-card)',
-              border: '1px solid var(--border-default)',
-            }}
-          >
-            <h2
-              className="text-lg font-semibold mb-2"
-              style={{ fontFamily: 'var(--font-serif)', color: 'var(--text-strong)' }}
-            >
-              Confirm Renewal
-            </h2>
-            <p className="text-sm mb-6" style={{ color: 'var(--text-muted)' }}>
-              This will initiate a renewal for{' '}
-              <span className="font-medium" style={{ color: 'var(--text-body)' }}>
-                {renewal.vendor}
-              </span>{' '}
-              at the proposed contract terms.
-            </p>
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-2 text-sm font-medium rounded-full transition-colors"
-                style={{
-                  color: 'var(--ink-600)',
-                  border: '1px solid var(--border-default)',
-                  background: 'transparent',
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirm}
-                className="flex-1 px-4 py-2 text-sm font-medium rounded-full transition-colors"
-                style={{
-                  background: 'var(--clay-500)',
-                  color: '#fff',
-                  border: '1px solid var(--clay-500)',
-                }}
-              >
-                Confirm Renewal
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

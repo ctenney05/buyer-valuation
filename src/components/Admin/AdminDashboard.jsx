@@ -3,6 +3,20 @@ import { adminDeals } from '../../data/adminData.js';
 import PipelineList from './PipelineList.jsx';
 import DealDetail from './DealDetail.jsx';
 
+function getBucket(deal) {
+  if (deal.status === 'renewed' || deal.status === 'declined') return 'closed';
+  if (deal.chatMessages > 0 || deal.portalViews >= 4) return 'engaged';
+  if (deal.portalViews < 2 && deal.daysToRenewal <= 30) return 'at-risk';
+  return 'monitoring';
+}
+
+const BUCKETS = [
+  { key: 'at-risk',    label: 'At Risk',    color: '#EF4444' },
+  { key: 'monitoring', label: 'Monitoring', color: '#F59E0B' },
+  { key: 'engaged',    label: 'Engaged',    color: '#22C55E' },
+  { key: 'closed',     label: 'Closed',     color: 'var(--text-subtle)' },
+];
+
 function SellerChip({ name, logo, initials }) {
   const [imgFailed, setImgFailed] = useState(false);
   return (
@@ -46,6 +60,12 @@ export default function AdminDashboard({ onModeChange, buyerRenewed, onReset }) 
     ? adminDeals.map((d) => d.id === 'deal-001' ? { ...d, status: 'renewed', renewedDate: '2026-06-18' } : d)
     : adminDeals;
   const selectedDeal = deals.find((d) => d.id === selectedDealId) ?? deals[0];
+
+  const bucketCounts = { 'at-risk': 0, monitoring: 0, engaged: 0, closed: 0 };
+  deals.forEach(d => { bucketCounts[getBucket(d)]++; });
+  const flags = deals.filter(d =>
+    d.status === 'evaluation' && d.daysToRenewal <= 30 && d.portalViews < 2
+  );
 
   return (
     <div className="flex flex-col" style={{ height: '100vh', overflow: 'hidden', background: 'var(--surface-page)' }}>
@@ -152,7 +172,12 @@ export default function AdminDashboard({ onModeChange, buyerRenewed, onReset }) 
           selectedDealId={selectedDealId}
           onSelect={setSelectedDealId}
         />
-        <DealDetail deal={selectedDeal} />
+        <DealDetail
+          deal={selectedDeal}
+          bucketCounts={bucketCounts}
+          flags={flags}
+          onSelect={setSelectedDealId}
+        />
       </div>
 
     </div>
