@@ -14,12 +14,13 @@ It contains two independently-mountable surfaces plus the data contracts that co
 
 ## Run it (testable)
 
-No separate install — the harness resolves the parent repo's `node_modules`.
+The module is self-contained (its own `package.json`):
 
 ```bash
 cd buyer-evaluation-module
-npx vite          # dev server
-npx vite build    # production build (verifies the whole module compiles)
+npm install       # first time only
+npm run dev       # dev server (or: npx vite)
+npm run build     # production build (verifies the whole module compiles)
 ```
 
 `src/main.jsx` → `src/DemoApp.jsx` is a **test harness only** (a top-right Buyer/Seller switch + shared state). It demonstrates the live data flow; it is **not** part of the shippable module. When you mount into the combined dashboard, drop `DemoApp.jsx` and render `BuyerPortal` / `SellerDashboard` directly.
