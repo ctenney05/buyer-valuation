@@ -420,7 +420,10 @@ function BuyingTeam({ sharedWith, portalAccessLog, buyerContact, chatTranscript,
   );
 }
 
-export default function DealDetail({ deal, featureFlags, onFlagChange, onBack }) {
+// `embedded`: when mounted inside a shell that already shows the account header +
+// countdown (e.g. AccountPage), pass embedded so this view starts at the Buying
+// Team card and doesn't duplicate them.
+export default function DealDetail({ deal, featureFlags, onFlagChange, onBack, embedded = false }) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
 
@@ -441,54 +444,58 @@ export default function DealDetail({ deal, featureFlags, onFlagChange, onBack })
         </button>
       )}
 
-      {/* Section 1 — Header */}
-      <div className="rounded-xl px-5 py-4" style={cardStyle}>
-        <div className="flex items-center gap-4">
-          {/* Company logo */}
-          {deal.domain && (
-            <img
-              src={`https://www.google.com/s2/favicons?sz=128&domain_url=https://${deal.domain}`}
-              alt={deal.buyerCompany}
-              className="w-10 h-10 rounded-lg flex-shrink-0"
-              style={{ border: '1px solid var(--border-subtle)', objectFit: 'contain', background: '#fff' }}
-              onError={e => { e.currentTarget.style.display = 'none'; }}
-            />
-          )}
-          {/* Company + vendor */}
-          <div className="flex-shrink-0">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <h2
-                className="font-bold leading-tight"
-                style={{ fontFamily: 'var(--font-serif)', fontSize: '22px', color: 'var(--text-strong)' }}
+      {!embedded && (
+        <>
+        {/* Section 1 — Header */}
+        <div className="rounded-xl px-5 py-4" style={cardStyle}>
+          <div className="flex items-center gap-4">
+            {/* Company logo */}
+            {deal.domain && (
+              <img
+                src={`https://www.google.com/s2/favicons?sz=128&domain_url=https://${deal.domain}`}
+                alt={deal.buyerCompany}
+                className="w-10 h-10 rounded-lg flex-shrink-0"
+                style={{ border: '1px solid var(--border-subtle)', objectFit: 'contain', background: '#fff' }}
+                onError={e => { e.currentTarget.style.display = 'none'; }}
+              />
+            )}
+            {/* Company + vendor */}
+            <div className="flex-shrink-0">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <h2
+                  className="font-bold leading-tight"
+                  style={{ fontFamily: 'var(--font-serif)', fontSize: '22px', color: 'var(--text-strong)' }}
+                >
+                  {deal.buyerCompany}
+                </h2>
+              </div>
+              <p
+                className="mt-0.5"
+                style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-subtle)' }}
               >
-                {deal.buyerCompany}
-              </h2>
+                {deal.vendor}
+              </p>
             </div>
-            <p
-              className="mt-0.5"
-              style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-subtle)' }}
-            >
-              {deal.vendor}
-            </p>
-          </div>
-          {/* Progress tracker — inline */}
-          <div className="flex-1 min-w-0">
-            <ProgressTracker progress={deal.progress} />
-          </div>
-          {/* ACV */}
-          <div className="flex-shrink-0 text-right">
-            <p
-              className="font-bold"
-              style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', color: 'var(--clay-600)' }}
-            >
-              ${deal.annualValue.toLocaleString()}/yr
-            </p>
+            {/* Progress tracker — inline */}
+            <div className="flex-1 min-w-0">
+              <ProgressTracker progress={deal.progress} />
+            </div>
+            {/* ACV */}
+            <div className="flex-shrink-0 text-right">
+              <p
+                className="font-bold"
+                style={{ fontFamily: 'var(--font-mono)', fontSize: '18px', color: 'var(--clay-600)' }}
+              >
+                ${deal.annualValue.toLocaleString()}/yr
+              </p>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Countdown box */}
-      <CountdownBox deal={deal} />
+        {/* Countdown box */}
+        <CountdownBox deal={deal} />
+        </>
+      )}
 
       {/* Buying Team + engagement — who the buyer pulled in, what each has done, and the chat log */}
       <BuyingTeam

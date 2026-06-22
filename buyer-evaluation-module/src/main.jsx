@@ -1,12 +1,13 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import DemoApp from './DemoApp.jsx';
+import AccountPage from './AccountPage.jsx';
 import './index.css';
 
-// Standalone harness entry. The real integration mounts BuyerPortal and/or
-// SellerDashboard directly — see README.md.
+// Standalone harness entry → the unified account-page shell (Buyer Eval wired
+// live + placeholders for the other stages). `DemoApp.jsx` (buyer/seller toggle)
+// is still here if you want to run the module surfaces in isolation instead.
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <DemoApp />
+    <AccountPage />
   </React.StrictMode>,
 );
