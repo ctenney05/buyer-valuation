@@ -2,10 +2,7 @@ import { useState, useMemo } from 'react';
 import { Calculator } from 'lucide-react';
 import { roiDefaults } from '../../data/roiData.js';
 import { renewal } from '../../data/renewalData.js';
-
-function formatCurrency(n) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
-}
+import { formatCurrency } from '../../data/format.js';
 
 function formatNumber(n) {
   return new Intl.NumberFormat('en-US').format(Math.round(n));
@@ -96,6 +93,10 @@ export default function ROICalculatorTab() {
           ROI Calculator
         </h2>
       </div>
+
+      <p className="text-[13.5px]" style={{ color: 'var(--text-muted)' }}>
+        Adjust the inputs below to model your team's time savings and see how the investment pays back.
+      </p>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Inputs */}

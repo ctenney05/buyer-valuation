@@ -1,3 +1,11 @@
 claude
-* ~~i need a .md file describing the problem that the renewals hub is meant to fix and exactly what it does so that i can builld a pitch deck with claude~~
-	* ~~it should a brief that has enough content for 3 slides~~
+* work thru evan instructions
+
+
+me
+* practice pitch for tuesday
+* read thru evan big picture framing
+* keep trying solutions for meeting recordings
+
+1 on 1 with evan
+* 

@@ -23,10 +23,10 @@ export const contractStats = [
 ];
 
 export const utilization = [
-  { product: 'Orchestration', usagePct: 91, description: 'Lead routing and assignment automation' },
-  { product: 'Scheduling',    usagePct: 78, description: 'Territory and capacity management'     },
-  { product: 'Buying Groups', usagePct: 0,  description: 'Multi-stakeholder deal rooms'          },
-  { product: 'Product 4',     usagePct: 0,  description: 'Usage & churn-risk analytics'          },
+  { product: 'Orchestration', usagePct: 91, description: 'Lead routing and assignment automation', url: 'https://app.leandata.com/orchestration'        },
+  { product: 'Scheduling',    usagePct: 78, description: 'Territory and capacity management',     url: 'https://app.leandata.com/scheduling'            },
+  { product: 'Buying Groups', usagePct: 0,  description: 'Multi-stakeholder deal rooms',          url: 'https://www.leandata.com/product/buying-groups' },
+  { product: 'Product 4',     usagePct: 0,  description: 'Usage & churn-risk analytics',          url: 'https://www.leandata.com/product/analytics'     },
 ];
 
 export const orderForm = {
@@ -71,7 +71,7 @@ export const orderForm = {
   pricingJustification: 'Reflects a standard 5% annual seat-price increase over the prior term ($26.00 → $27.20/user/year), applied at renewal per enterprise agreement terms. Multi-year pricing available upon request.',
   prevTotal: '$6,476',
   total: '$6,800',
-  msaUrl: 'https://www.leandata.com/legal/msa',
+  msaUrl: 'https://www.leandata.com/terms-of-service/',
   keyChanges: [
     'Auto-renewal clause added (60-day written notice required)',
     'Data Processing Agreement updated to 2024 SCCs',

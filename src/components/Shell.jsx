@@ -4,9 +4,9 @@ import { renewal, orderForm } from '../data/renewalData.js';
 
 const TABS = [
   { id: 'home',             label: 'Home'             },
-  { id: 'contract-history', label: 'Contract History' },
+  { id: 'contract-history', label: 'Documents'         },
   { id: 'roi-calculator',   label: 'ROI Calculator'   },
-  { id: 'proposal-deck',    label: 'Proposal Deck'    },
+  { id: 'proposal-deck',    label: 'Renewals Deck'    },
 ];
 
 function PartyChip({ name, initials, kind }) {
@@ -47,7 +47,7 @@ function PartyChip({ name, initials, kind }) {
 }
 
 
-export default function Shell({ activeTab, onTabChange, onModeChange, onRenew, renewed, selectedOption, children }) {
+export default function Shell({ activeTab, onTabChange, onModeChange, onRenew, renewed, selectedOption, featureFlags, children }) {
   const [confirming, setConfirming] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [btnHovered, setBtnHovered] = useState(false);
@@ -272,7 +272,12 @@ export default function Shell({ activeTab, onTabChange, onModeChange, onRenew, r
         }}
       >
         <div className="flex overflow-x-auto">
-          {TABS.map((tab) => (
+          {TABS.filter((tab) => {
+            if (tab.id === 'roi-calculator'   && featureFlags?.showROICalculator   === false) return false;
+            if (tab.id === 'contract-history' && featureFlags?.showContractHistory === false) return false;
+            if (tab.id === 'proposal-deck'    && featureFlags?.showProposalDeck    === false) return false;
+            return true;
+          }).map((tab) => (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}

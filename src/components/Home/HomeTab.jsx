@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Zap, CalendarDays } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Zap, CalendarDays, ExternalLink, ChevronLeft, ChevronRight, Clock, Video, Check, X } from 'lucide-react';
+import { SLIDES } from '../ProposalDeck/ProposalDeckTab.jsx';
 import {
   renewal, contractStats, utilization,
   orderForm, buyerTeam, sellerContacts,
@@ -134,7 +135,7 @@ function ContractStats() {
   );
 }
 
-function UtilizationList() {
+function UtilizationList({ showBars }) {
   return (
     <div
       className="rounded-xl p-5"
@@ -159,12 +160,24 @@ function UtilizationList() {
           return (
             <div key={u.product}>
               <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span
-                  className="text-[13.5px] font-medium"
-                  style={{ color: active ? 'var(--ink-800)' : 'var(--text-subtle)' }}
-                >
-                  {u.product}
-                </span>
+                {u.url ? (
+                  <a
+                    href={u.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1 text-[13.5px] font-medium"
+                    style={{ color: active ? 'var(--clay-600)' : 'var(--text-subtle)', textDecoration: 'none', pointerEvents: active ? 'auto' : 'none' }}
+                    onMouseEnter={e => { if (active) e.currentTarget.style.textDecoration = 'underline'; }}
+                    onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
+                  >
+                    {u.product}
+                    {active && <ExternalLink style={{ width: 11, height: 11, flexShrink: 0 }} />}
+                  </a>
+                ) : (
+                  <span className="text-[13.5px] font-medium" style={{ color: active ? 'var(--ink-800)' : 'var(--text-subtle)' }}>
+                    {u.product}
+                  </span>
+                )}
                 <span
                   className="font-semibold text-xs px-2 py-0.5 rounded-full flex-shrink-0"
                   style={
@@ -180,6 +193,41 @@ function UtilizationList() {
                 <p className="text-[10.5px] mb-1.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
                   {u.description}
                 </p>
+              )}
+              {!active && u.url && (
+                <a
+                  href={u.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-[11px] font-semibold mt-0.5"
+                  style={{ fontFamily: 'var(--font-mono)', color: 'var(--clay-600)', textDecoration: 'none' }}
+                  onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
+                  onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}
+                >
+                  Learn more <ExternalLink style={{ width: 10, height: 10 }} />
+                </a>
+              )}
+              {active && showBars && (
+                <div className="flex items-center gap-2 mt-1">
+                  <div className="flex-1 rounded-full overflow-hidden" style={{ height: 4, background: 'var(--surface-sunken)' }}>
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${u.usagePct}%`,
+                        background: u.usagePct >= 80 ? 'var(--success-600)' : u.usagePct >= 50 ? 'var(--clay-500)' : 'var(--danger-600)',
+                      }}
+                    />
+                  </div>
+                  <span
+                    className="text-[10.5px] font-semibold flex-shrink-0"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      color: u.usagePct >= 80 ? 'var(--success-600)' : u.usagePct >= 50 ? 'var(--clay-600)' : 'var(--danger-600)',
+                    }}
+                  >
+                    {u.usagePct}% utilized
+                  </span>
+                </div>
               )}
             </div>
           );
@@ -247,6 +295,12 @@ function WhatChangedCard() {
           </a>
         </div>
       </div>
+      <p
+        className="mt-3 text-[10px]"
+        style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}
+      >
+        Portal assembled by Pareto Agent · Jun 1, 2026
+      </p>
     </div>
   );
 }
@@ -257,7 +311,7 @@ const HIGHLIGHT_COLORS = {
   changed: { headerBg: 'var(--clay-200)', bg: 'var(--clay-100)', bd: 'var(--clay-200)', fg: 'var(--clay-700)', tag: 'Clause Updated' },
 };
 
-function ProposedChanges({ selectedOption, onOptionChange }) {
+function ProposedChanges({ selectedOption, onOptionChange, showHighlights }) {
   const [highlightsOn, setHighlightsOn] = useState(false);
 
   return (
@@ -292,18 +346,20 @@ function ProposedChanges({ selectedOption, onOptionChange }) {
             For Review
           </span>
         </div>
-        <button
-          onClick={() => setHighlightsOn((v) => !v)}
-          className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors"
-          style={
-            highlightsOn
-              ? { background: 'var(--clay-600)', borderColor: 'var(--clay-600)', color: '#fff' }
-              : { background: 'transparent', borderColor: 'var(--border-default)', color: 'var(--text-muted)' }
-          }
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-current" />
-          Highlights {highlightsOn ? 'ON' : 'OFF'}
-        </button>
+        {showHighlights && (
+          <button
+            onClick={() => setHighlightsOn((v) => !v)}
+            className="flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors"
+            style={
+              highlightsOn
+                ? { background: 'var(--clay-600)', borderColor: 'var(--clay-600)', color: '#fff' }
+                : { background: 'transparent', borderColor: 'var(--border-default)', color: 'var(--text-muted)' }
+            }
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-current" />
+            Highlights {highlightsOn ? 'ON' : 'OFF'}
+          </button>
+        )}
       </div>
 
       {/* Renewal option selector */}
@@ -548,7 +604,79 @@ function ProposedChanges({ selectedOption, onOptionChange }) {
   );
 }
 
+function InviteModal({ onClose }) {
+  const [copied, setCopied] = useState(false);
+  const portalUrl = 'https://hub.paretoagent.ai/uber-leandata-2026';
+
+  function handleCopy() {
+    navigator.clipboard.writeText(portalUrl).catch(() => {});
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ background: 'rgba(20,20,19,0.45)' }}
+      onClick={onClose}
+    >
+      <div
+        className="rounded-2xl p-6 w-[380px] max-w-[90vw] space-y-4"
+        style={{
+          background: 'var(--surface-card)',
+          border: '1px solid var(--border-default)',
+          boxShadow: 'var(--shadow-lg, 0 8px 32px rgba(20,20,19,0.18))',
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div>
+          <h3 className="text-[17px] font-semibold" style={{ fontFamily: 'var(--font-serif)', color: 'var(--text-strong)' }}>
+            Invite a colleague
+          </h3>
+          <p className="mt-1 text-[12.5px]" style={{ color: 'var(--text-muted)' }}>
+            Share this link so they can review the proposal and pricing directly.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <input
+            readOnly
+            value={portalUrl}
+            className="flex-1 rounded-lg px-3 py-2 text-[12px] outline-none"
+            style={{
+              fontFamily: 'var(--font-mono)',
+              border: '1px solid var(--border-default)',
+              background: 'var(--surface-sunken)',
+              color: 'var(--text-body)',
+            }}
+          />
+          <button
+            onClick={handleCopy}
+            className="flex-shrink-0 rounded-lg px-4 py-2 text-[12.5px] font-semibold"
+            style={{
+              background: copied ? 'var(--success-100)' : 'var(--clay-500)',
+              color: copied ? 'var(--success-600)' : '#fff',
+              border: 'none',
+              cursor: 'pointer',
+              transition: 'background 0.15s, color 0.15s',
+            }}
+          >
+            {copied ? '✓ Copied' : 'Copy link'}
+          </button>
+        </div>
+        <button
+          onClick={onClose}
+          className="w-full text-[12px] py-1"
+          style={{ color: 'var(--text-subtle)', background: 'none', border: 'none', cursor: 'pointer' }}
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function BuyerTeamPanel() {
+  const [showInvite, setShowInvite] = useState(false);
   return (
     <div
       className="rounded-xl p-4"
@@ -598,6 +726,7 @@ function BuyerTeamPanel() {
           </div>
         ))}
         <button
+          onClick={() => setShowInvite(true)}
           className="w-full flex items-center gap-2 mt-1 rounded-lg py-2 px-3 text-[12.5px] font-medium transition-colors"
           style={{
             border: '1px dashed var(--border-default)',
@@ -615,6 +744,7 @@ function BuyerTeamPanel() {
           + Invite a colleague
         </button>
       </div>
+      {showInvite && <InviteModal onClose={() => setShowInvite(false)} />}
     </div>
   );
 }
@@ -758,9 +888,256 @@ function ChatbotWidget() {
   );
 }
 
+// ── Calendly-style scheduling picker ──────────────────────────────────────────
+
+const SLOT_TIMES = [
+  '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
+  '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+];
+
+// Next `count` weekdays starting tomorrow. Browser context — real Date is fine.
+function buildBookingDays(count = 6) {
+  const days = [];
+  const cur = new Date();
+  cur.setHours(0, 0, 0, 0);
+  let guard = 0;
+  while (days.length < count && guard < 30) {
+    guard += 1;
+    cur.setDate(cur.getDate() + 1);
+    const dow = cur.getDay();
+    if (dow === 0 || dow === 6) continue; // skip weekends
+    days.push(new Date(cur));
+  }
+  return days;
+}
+
+// Stable, deterministic "already booked" pattern — no Math.random so it never
+// shifts mid-demo, but each day shows a different set of open times.
+function slotBooked(dateIdx, slotIdx) {
+  // Additive day term (not a multiplier) so no single day shares the modulus
+  // and ends up fully booked — every day keeps a mix of open/taken slots.
+  return (slotIdx + dateIdx * 2 + 1) % 5 === 0;
+}
+
+function ScheduleModal({ am, onClose, onBooked }) {
+  const days = useMemo(() => buildBookingDays(6), []);
+  const [dateIdx, setDateIdx] = useState(0);
+  const [slot, setSlot] = useState(null);
+  const [confirmed, setConfirmed] = useState(false);
+  const [confirmHovered, setConfirmHovered] = useState(false);
+
+  useEffect(() => {
+    function onKey(e) { if (e.key === 'Escape') onClose(); }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  const selectedDay = days[dateIdx];
+  const dayLabel = selectedDay.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  function handleConfirm() {
+    setConfirmed(true);
+    if (onBooked) onBooked({ day: selectedDay, slot });
+  }
+
+  return (
+    <>
+      <div
+        className="fixed inset-0"
+        style={{ background: 'rgba(35,33,30,0.45)', backdropFilter: 'blur(2px)', zIndex: 110 }}
+        onClick={onClose}
+      />
+      <div
+        className="fixed inset-0 flex items-center justify-center p-4"
+        style={{ zIndex: 120 }}
+        onClick={onClose}
+      >
+        <div
+          className="relative rounded-2xl overflow-hidden w-full flex flex-col"
+          style={{ maxWidth: 720, maxHeight: '90vh', background: 'var(--surface-card)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-lg, 0 16px 48px rgba(0,0,0,0.18))' }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Close */}
+          <button
+            onClick={onClose}
+            className="absolute flex items-center justify-center rounded-full"
+            style={{ top: 14, right: 14, width: 30, height: 30, background: 'rgba(0,0,0,0.04)', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', zIndex: 2 }}
+            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.09)')}
+            onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          <div className="flex flex-col sm:flex-row" style={{ minHeight: 0 }}>
+            {/* Left — meeting summary */}
+            <div
+              className="p-6 flex-shrink-0 sm:w-[252px]"
+              style={{ background: 'var(--surface-sunken)', borderRight: '1px solid var(--border-subtle)' }}
+            >
+              <p className="text-[10px] uppercase tracking-widest mb-3" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+                LeanData · Renewals
+              </p>
+              <div className="flex items-center gap-2.5 mb-4">
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0"
+                  style={{ background: 'var(--ocean-200)', color: 'var(--ocean-600)' }}
+                >
+                  {am.initials}
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--text-strong)' }}>{am.name}</p>
+                  <p className="text-[11px]" style={{ color: 'var(--text-subtle)' }}>{am.role}</p>
+                </div>
+              </div>
+              <h3 className="text-[18px] font-semibold leading-snug mb-4" style={{ fontFamily: 'var(--font-serif)', color: 'var(--text-strong)' }}>
+                Renewal review call
+              </h3>
+              <div className="space-y-2.5">
+                <div className="flex items-center gap-2.5">
+                  <Clock className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-subtle)' }} />
+                  <span className="text-[12.5px]" style={{ color: 'var(--text-body)' }}>30 min</span>
+                </div>
+                <div className="flex items-center gap-2.5">
+                  <Video className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--text-subtle)' }} />
+                  <span className="text-[12.5px]" style={{ color: 'var(--text-body)' }}>Zoom · link on confirm</span>
+                </div>
+                {slot && (
+                  <div className="flex items-center gap-2.5">
+                    <CalendarDays className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--ocean-600)' }} />
+                    <span className="text-[12.5px] font-medium" style={{ color: 'var(--ocean-600)' }}>
+                      {selectedDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {slot}
+                    </span>
+                  </div>
+                )}
+              </div>
+              <p className="text-[11.5px] mt-5 leading-relaxed" style={{ color: 'var(--text-subtle)' }}>
+                Walk through your proposed order form, pricing, and any redlines before you sign.
+              </p>
+            </div>
+
+            {/* Right — picker / confirmation */}
+            <div className="p-6 flex-1 overflow-y-auto" style={{ minWidth: 0 }}>
+              {confirmed ? (
+                <div className="flex flex-col items-center justify-center text-center h-full py-6">
+                  <div
+                    className="flex items-center justify-center rounded-full mb-4"
+                    style={{ width: 52, height: 52, background: '#DCFCE7', color: '#15803D' }}
+                  >
+                    <Check className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-[19px] font-semibold mb-1" style={{ fontFamily: 'var(--font-serif)', color: 'var(--text-strong)' }}>
+                    You're booked
+                  </h3>
+                  <p className="text-[13px] mb-1" style={{ color: 'var(--text-body)' }}>{dayLabel} at {slot}</p>
+                  <p className="text-[12px] mb-6" style={{ color: 'var(--text-subtle)' }}>
+                    A calendar invite with the Zoom link is on its way to your inbox.
+                  </p>
+                  <button
+                    onClick={onClose}
+                    className="rounded-lg px-6 py-2.5 text-[13px] font-semibold"
+                    style={{ background: 'var(--ocean-600)', color: '#fff', border: 'none', cursor: 'pointer' }}
+                  >
+                    Done
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {/* Date strip */}
+                  <p className="text-[11px] uppercase tracking-widest mb-2.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+                    Select a day
+                  </p>
+                  <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
+                    {days.map((d, i) => {
+                      const active = i === dateIdx;
+                      return (
+                        <button
+                          key={i}
+                          onClick={() => { setDateIdx(i); setSlot(null); }}
+                          className="flex flex-col items-center rounded-lg flex-shrink-0"
+                          style={{
+                            width: 60, padding: '8px 0',
+                            background: active ? 'var(--ocean-600)' : 'var(--surface-card)',
+                            border: `1px solid ${active ? 'var(--ocean-600)' : 'var(--border-default)'}`,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          <span className="text-[9.5px] uppercase tracking-wide" style={{ fontFamily: 'var(--font-mono)', color: active ? 'rgba(255,255,255,0.8)' : 'var(--text-subtle)' }}>
+                            {d.toLocaleDateString('en-US', { weekday: 'short' })}
+                          </span>
+                          <span className="text-[18px] font-semibold leading-tight" style={{ color: active ? '#fff' : 'var(--text-strong)' }}>
+                            {d.getDate()}
+                          </span>
+                          <span className="text-[9px] uppercase" style={{ fontFamily: 'var(--font-mono)', color: active ? 'rgba(255,255,255,0.8)' : 'var(--text-subtle)' }}>
+                            {d.toLocaleDateString('en-US', { month: 'short' })}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Time grid */}
+                  <div className="flex items-center justify-between mb-2.5">
+                    <p className="text-[11px] uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+                      Select a time
+                    </p>
+                    <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>Pacific Time</span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2 mb-6">
+                    {SLOT_TIMES.map((t, si) => {
+                      const booked = slotBooked(dateIdx, si);
+                      const active = slot === t;
+                      return (
+                        <button
+                          key={t}
+                          disabled={booked}
+                          onClick={() => setSlot(t)}
+                          className="rounded-lg py-2 text-[12.5px] font-medium transition-colors"
+                          style={{
+                            background: active ? 'var(--ocean-600)' : booked ? 'var(--surface-sunken)' : 'var(--surface-card)',
+                            color: active ? '#fff' : booked ? 'var(--text-subtle)' : 'var(--ocean-600)',
+                            border: `1px solid ${active ? 'var(--ocean-600)' : booked ? 'var(--border-subtle)' : 'var(--ocean-200)'}`,
+                            cursor: booked ? 'not-allowed' : 'pointer',
+                            textDecoration: booked ? 'line-through' : 'none',
+                            opacity: booked ? 0.6 : 1,
+                          }}
+                        >
+                          {t}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    onClick={handleConfirm}
+                    disabled={!slot}
+                    onMouseEnter={() => setConfirmHovered(true)}
+                    onMouseLeave={() => setConfirmHovered(false)}
+                    className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-[13.5px] font-semibold transition-colors"
+                    style={{
+                      background: !slot ? 'var(--surface-sunken)' : confirmHovered ? 'var(--ocean-700, #1f6f8b)' : 'var(--ocean-600)',
+                      color: !slot ? 'var(--text-subtle)' : '#fff',
+                      border: 'none',
+                      cursor: slot ? 'pointer' : 'not-allowed',
+                    }}
+                  >
+                    <CalendarDays className="w-4 h-4" />
+                    {slot ? `Confirm — ${selectedDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${slot}` : 'Pick a time to continue'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
 function SellerContactsPanel() {
-  const [requested, setRequested] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
+  const [booked, setBooked] = useState(null);
   const [hovered, setHovered] = useState(false);
+  const am = sellerContacts[0] ?? { initials: 'AM', name: 'Your account manager', role: 'Account Manager' };
 
   return (
     <div
@@ -813,16 +1190,25 @@ function SellerContactsPanel() {
 
       {/* Schedule call CTA */}
       <div className="mt-3 pt-3" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-        {requested ? (
-          <div className="flex items-center gap-2.5 px-1 py-1">
-            <CalendarDays className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--ocean-600)' }} />
-            <p className="text-[12px] font-medium" style={{ color: 'var(--ocean-600)' }}>
-              Request sent — your AM will follow up shortly.
-            </p>
-          </div>
+        {booked ? (
+          <button
+            onClick={() => setScheduling(true)}
+            className="w-full rounded-lg px-3 py-2 flex items-center gap-2.5 text-left"
+            style={{ background: 'var(--ocean-200)', border: '1px solid var(--ocean-200)', cursor: 'pointer' }}
+          >
+            <Check className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--ocean-600)' }} />
+            <div>
+              <p className="text-[12.5px] font-semibold leading-tight" style={{ color: 'var(--ocean-600)' }}>
+                Call booked with {am.name.split(' ')[0]}
+              </p>
+              <p className="text-[10.5px] mt-0.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+                {booked.day.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })} · {booked.slot}
+              </p>
+            </div>
+          </button>
         ) : (
           <button
-            onClick={() => setRequested(true)}
+            onClick={() => setScheduling(true)}
             onMouseEnter={() => setHovered(true)}
             onMouseLeave={() => setHovered(false)}
             className="w-full rounded-lg px-3 py-2 flex items-center gap-2.5 text-left"
@@ -838,11 +1224,103 @@ function SellerContactsPanel() {
                 Schedule a call with your AM
               </p>
               <p className="text-[10.5px] mt-0.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
-                {sellerContacts[0]?.name ?? 'Your account manager'}
+                {am.name} · pick a time
               </p>
             </div>
           </button>
         )}
+      </div>
+
+      {scheduling && (
+        <ScheduleModal
+          am={am}
+          onClose={() => setScheduling(false)}
+          onBooked={setBooked}
+        />
+      )}
+    </div>
+  );
+}
+
+// ── Deck teaser card ──────────────────────────────────────────────────────────
+
+const TEASER_INDICES = [0, 3, 5]; // Cover, Pricing, Next Steps
+
+function DeckTeaserCard({ onViewDeck }) {
+  return (
+    <div
+      className="rounded-xl overflow-hidden"
+      style={{
+        background: 'var(--surface-card)',
+        border: '1px solid var(--border-default)',
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
+      {/* Header */}
+      <div
+        className="px-4 py-3 flex items-center justify-between"
+        style={{ borderBottom: '1px solid var(--border-subtle)' }}
+      >
+        <div>
+          <p className="text-[13px] font-semibold leading-tight" style={{ color: 'var(--text-strong)' }}>
+            Renewals Deck
+          </p>
+          <p className="text-[10px] mt-0.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+            Generated by the Proposal Agent · {SLIDES.length} slides
+          </p>
+        </div>
+      </div>
+
+      {/* Thumbnail strip */}
+      <div className="p-3 flex gap-2">
+        {TEASER_INDICES.map((idx) => {
+          const { Component, title } = SLIDES[idx];
+          return (
+            <button
+              key={idx}
+              onClick={onViewDeck}
+              className="flex-1 flex flex-col gap-1 cursor-pointer"
+              style={{ background: 'none', border: 'none', padding: 0, textAlign: 'left' }}
+            >
+              <div
+                className="w-full overflow-hidden rounded"
+                style={{
+                  aspectRatio: '16 / 9',
+                  border: '1px solid var(--border-subtle)',
+                  position: 'relative',
+                }}
+              >
+                <div style={{ position: 'absolute', inset: 0 }}>
+                  <Component size="thumb" />
+                </div>
+              </div>
+              <p
+                className="truncate"
+                style={{ fontFamily: 'var(--font-mono)', fontSize: '8.5px', color: 'var(--text-subtle)' }}
+              >
+                {title}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Footer CTA */}
+      <div className="px-3 pb-3">
+        <button
+          onClick={onViewDeck}
+          className="w-full rounded-lg py-2 text-[12px] font-semibold"
+          style={{
+            background: 'var(--surface-sunken)',
+            border: '1px solid var(--border-default)',
+            color: 'var(--clay-600)',
+            cursor: 'pointer',
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = 'var(--clay-100)'; e.currentTarget.style.borderColor = 'var(--clay-200)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = 'var(--surface-sunken)'; e.currentTarget.style.borderColor = 'var(--border-default)'; }}
+        >
+          View full deck →
+        </button>
       </div>
     </div>
   );
@@ -850,24 +1328,31 @@ function SellerContactsPanel() {
 
 // ── Main export ───────────────────────────────────────────────────────────────
 
-export default function HomeTab({ selectedOption, onOptionChange }) {
+export default function HomeTab({ selectedOption, onOptionChange, featureFlags, onTabChange }) {
   return (
     <div className="grid grid-cols-12 gap-5 items-start">
       <div className="col-span-3 space-y-4">
         <CountdownBox />
         <ContractStats />
-        <UtilizationList />
+        <UtilizationList showBars={featureFlags?.showUsageData !== false} />
       </div>
 
       <div className="col-span-6 space-y-4 self-stretch flex flex-col">
         <WhatChangedCard />
         <div className="flex-1">
-          <ProposedChanges selectedOption={selectedOption} onOptionChange={onOptionChange} />
+          <ProposedChanges
+            selectedOption={selectedOption}
+            onOptionChange={onOptionChange}
+            showHighlights={featureFlags?.showHighlights !== false}
+          />
         </div>
       </div>
 
       <div className="col-span-3 space-y-4">
-        <ChatbotWidget />
+        {featureFlags?.showChatbot !== false && <ChatbotWidget />}
+        {featureFlags?.showProposalDeck !== false && (
+          <DeckTeaserCard onViewDeck={() => onTabChange?.('proposal-deck')} />
+        )}
         <SellerContactsPanel />
         <BuyerTeamPanel />
       </div>
