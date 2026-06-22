@@ -1,6 +1,21 @@
 import { useState, Fragment } from 'react';
-import { ChevronLeft, Check, Lock, BarChart3, Mail, FileText, Users, PenLine } from 'lucide-react';
+import { ChevronLeft, Check, Lock, Radar, BarChart3, Mail, FileText, Users, PenLine } from 'lucide-react';
 import DealDetail, { CountdownBox } from './DealDetail.jsx';
+import QualificationTab from './stages/QualificationTab.jsx';
+import OutreachTab from './stages/OutreachTab.jsx';
+import ProposalTab from './stages/ProposalTab.jsx';
+import MonitoringTab from './stages/MonitoringTab.jsx';
+import RenewalTab from './stages/RenewalTab.jsx';
+import { STAGE_DATA } from '../../data/stageModules.js';
+
+// stage id → the module tab component (Buyer Evaluation = live DealDetail, handled separately)
+const TAB_BY_ID = {
+  monitoring: MonitoringTab,
+  qualification: QualificationTab,
+  outreach: OutreachTab,
+  proposal: ProposalTab,
+  renewal: RenewalTab,
+};
 
 const cardStyle = {
   background: 'var(--surface-card)',
@@ -13,6 +28,7 @@ const cardStyle = {
 // placeholders for the modules that will plug in here (qualification / outreach /
 // proposal owned by the other agents).
 const STAGES = [
+  { id: 'monitoring',    label: 'Monitoring',       icon: Radar,     owner: 'Monitoring agent',        desc: 'The agent is watching usage and the contract clock; no outreach triggered yet.' },
   { id: 'qualification', label: 'Qualification',    icon: BarChart3, owner: 'Qualification agent',     desc: 'Account scoring, renewal-risk signals, and the recommended renewal plan render here.' },
   { id: 'outreach',      label: 'Outreach',         icon: Mail,      owner: 'Outreach agent',          desc: 'Email drafting and the draft → sent → waiting → engaged lifecycle render here.' },
   { id: 'proposal',      label: 'Proposal',         icon: FileText,  owner: 'Proposal agent',          desc: 'The generated renewal deck and pricing story render here.' },
@@ -20,11 +36,11 @@ const STAGES = [
   { id: 'renewal',       label: 'Renewal',          icon: PenLine,   owner: 'Decision & signature',    desc: 'Closes out when the buyer signs the renewal.' },
 ];
 
-const STAGE_INDEX = { Qualification: 0, Outreach: 1, Proposal: 2, 'Buyer Evaluation': 3, Renewal: 4 };
+const STAGE_INDEX = { Monitoring: 0, Qualification: 1, Outreach: 2, Proposal: 3, 'Buyer Evaluation': 4, Renewal: 5 };
 
 function currentStageIdx(deal) {
-  if (deal.status === 'renewed' || deal.status === 'declined') return 4;
-  return STAGE_INDEX[deal.stage] ?? 3;
+  if (deal.status === 'renewed' || deal.status === 'declined') return 5;
+  return STAGE_INDEX[deal.stage] ?? 4;
 }
 
 function AccountLogo({ deal }) {
@@ -80,7 +96,7 @@ function StagePlaceholder({ stage, completed }) {
   );
 }
 
-export default function AccountPage({ deal, featureFlags, onFlagChange, onBack }) {
+export default function AccountPage({ deal, featureFlags, onFlagChange, onBack, backLabel = 'Back to pipeline' }) {
   const currentIdx = currentStageIdx(deal);
   const [activeId, setActiveId] = useState(STAGES[currentIdx].id);
   const activeIdx = STAGES.findIndex((s) => s.id === activeId);
@@ -100,7 +116,7 @@ export default function AccountPage({ deal, featureFlags, onFlagChange, onBack }
           onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--text-subtle)')}
         >
           <ChevronLeft className="w-4 h-4" />
-          Back to pipeline
+          {backLabel}
         </button>
 
         {/* Identity */}
@@ -180,14 +196,20 @@ export default function AccountPage({ deal, featureFlags, onFlagChange, onBack }
         </div>
       </div>
 
-      {/* ---- Active stage panel ---- */}
-      {activeId === 'evaluation' ? (
-        <DealDetail deal={deal} featureFlags={featureFlags} onFlagChange={onFlagChange} embedded />
-      ) : (
-        <div className="flex-1 overflow-y-auto p-6">
-          <StagePlaceholder stage={activeStage} completed={activeIdx < currentIdx} />
-        </div>
-      )}
+      {/* ---- Active stage panel: live Buyer Eval, else the integrated module tab, else placeholder ---- */}
+      {(() => {
+        if (activeId === 'evaluation') {
+          return <DealDetail deal={deal} featureFlags={featureFlags} onFlagChange={onFlagChange} embedded />;
+        }
+        const TabComp = TAB_BY_ID[activeId];
+        const data = STAGE_DATA[activeId]?.(deal) ?? null;
+        if (TabComp && data) return <TabComp deal={deal} data={data} />;
+        return (
+          <div className="flex-1 overflow-y-auto p-6">
+            <StagePlaceholder stage={activeStage} completed={activeIdx < currentIdx} />
+          </div>
+        );
+      })()}
 
     </div>
   );

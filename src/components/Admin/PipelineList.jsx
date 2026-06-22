@@ -80,7 +80,7 @@ const COL = {
   engagement: 'w-36',
 };
 
-export default function PipelineList({ deals, selectedDealId, onSelect }) {
+export default function PipelineList({ deals, selectedDealId, onSelect, statusColumn = null }) {
   const containerRef = useRef(null);
   const [sort, setSort] = useState({ by: 'renewal', dir: 'asc' });
 
@@ -131,7 +131,7 @@ export default function PipelineList({ deals, selectedDealId, onSelect }) {
       className="flex-1 overflow-y-auto"
       style={{ borderRight: '1px solid var(--border-default)' }}
     >
-      <ListHeader sort={sort} onSort={onSort} />
+      <ListHeader sort={sort} onSort={onSort} statusLabel={statusColumn?.label ?? 'Engagement'} />
       {sorted.map((deal) => (
         <DealRow
           key={deal.id}
@@ -139,6 +139,7 @@ export default function PipelineList({ deals, selectedDealId, onSelect }) {
           selected={deal.id === selectedDealId}
           onSelect={onSelect}
           dataSelected={deal.id === selectedDealId}
+          statusColumn={statusColumn}
         />
       ))}
     </div>
@@ -168,7 +169,7 @@ function SortHeader({ col, label, width, sort, onSort, align = 'left' }) {
   );
 }
 
-function ListHeader({ sort, onSort }) {
+function ListHeader({ sort, onSort, statusLabel = 'Engagement' }) {
   return (
     <div
       className="sticky top-0 z-10 flex items-center gap-4 px-5 h-9"
@@ -182,7 +183,7 @@ function ListHeader({ sort, onSort }) {
       <SortHeader col="account"    label="Account"       width={`${COL.account} flex-shrink-0`}    sort={sort} onSort={onSort} />
       <SortHeader col="renewal"    label="Renews"        width={`${COL.renewal} flex-shrink-0`}    sort={sort} onSort={onSort} />
       <SortHeader col="activity"   label="Last activity" width="flex-1 min-w-0"                     sort={sort} onSort={onSort} />
-      <SortHeader col="engagement" label="Engagement"    width={`${COL.engagement} flex-shrink-0`} align="right" sort={sort} onSort={onSort} />
+      <SortHeader col="engagement" label={statusLabel}   width={`${COL.engagement} flex-shrink-0`} align="right" sort={sort} onSort={onSort} />
       <div className="w-4 flex-shrink-0" />
     </div>
   );
@@ -211,7 +212,7 @@ function CompanyLogo({ deal }) {
   );
 }
 
-function DealRow({ deal, selected, onSelect, dataSelected }) {
+function DealRow({ deal, selected, onSelect, dataSelected, statusColumn }) {
   const signal = engagementSignal(deal);
   const activity = activityLine(deal);
   const overdue = deal.daysToRenewal <= 0;
@@ -271,17 +272,19 @@ function DealRow({ deal, selected, onSelect, dataSelected }) {
         {activity ? activity.text : ''}
       </p>
 
-      {/* Engagement pill — Evan: "per line, on the right hand side, tell me engaged / not engaged" */}
+      {/* Status column — default engagement pill; stage view overrides via statusColumn.render */}
       <div className={`${COL.engagement} flex-shrink-0 flex justify-end`}>
-        <span
-          className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
-          style={{ background: pillBg, opacity: signal.muted ? 0.7 : 1 }}
-        >
-          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: signal.color }} />
-          <span className="text-[10px] font-semibold whitespace-nowrap" style={{ fontFamily: 'var(--font-mono)', color: signal.color }}>
-            {signal.label}
+        {statusColumn?.render ? statusColumn.render(deal) : (
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1"
+            style={{ background: pillBg, opacity: signal.muted ? 0.7 : 1 }}
+          >
+            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: signal.color }} />
+            <span className="text-[10px] font-semibold whitespace-nowrap" style={{ fontFamily: 'var(--font-mono)', color: signal.color }}>
+              {signal.label}
+            </span>
           </span>
-        </span>
+        )}
       </div>
 
       <ChevronRight className="w-4 h-4 flex-shrink-0" style={{ color: selected ? 'var(--clay-500)' : 'var(--border-default)' }} />

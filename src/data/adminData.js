@@ -1,8 +1,12 @@
 // ---------------------------------------------------------------------------
 // adminData.js — swap these exports for API calls to connect real data
+//
+// `adminDeals` (exported at the bottom) = baseDeals enriched via STAGE_PLAN
+// (spreads the accounts across the 5 pipeline stages × 3 quarters) + a few
+// light early-stage accounts. To connect real data, replace baseDeals/STAGE_PLAN.
 // ---------------------------------------------------------------------------
 
-export const adminDeals = [
+const baseDeals = [
   {
     id: 'deal-001',
     buyerCompany: 'Uber',
@@ -663,3 +667,77 @@ export const adminDeals = [
     },
   },
 ];
+
+// ---------------------------------------------------------------------------
+// STAGE_PLAN — spreads the base accounts across the 5 pipeline stages × 3
+// quarters so the org funnel has a real silhouette. Overrides each deal's
+// `stage` + adds `stageStatus`/`quarter`/`expansionMultiplier`/`atRisk`/
+// `agentActivity`. Demo invariants: deal-001 (Uber) stays Buyer Evaluation /
+// evaluation / Q2 / Jul 23 (buyer demo coupling); Airbnb + Stripe stay in
+// Buyer Evaluation (engaged narrative + live drill targets).
+// expansionMultiplier: upsell ~1.1, flat 1.0, downsell ~0.85 → drives Projected ARR/NRR.
+// ---------------------------------------------------------------------------
+const STAGE_PLAN = {
+  // ---- Q2 (current quarter — late-stage heavy) ----
+  'deal-001': { stage: 'Buyer Evaluation', stageStatus: null, quarter: 'Q2', expansionMultiplier: 1.00, atRisk: true,
+    agentActivity: [{ kind: 'risk', text: 'Flagged Uber — 12 days dark, no new stakeholders', date: 'Jun 18' }] },
+  'deal-002': { stage: 'Buyer Evaluation', stageStatus: null, quarter: 'Q2', expansionMultiplier: 1.15,
+    agentActivity: [{ kind: 'qualification', text: 'Scored Stripe — expansion signals, upsell path', date: 'Jun 13' }] },
+  'deal-003': { stage: 'Buyer Evaluation', stageStatus: null, quarter: 'Q2', expansionMultiplier: 1.08,
+    agentActivity: [{ kind: 'qualification', text: 'Detected Legal (David Park) joined Airbnb buying team', date: 'Jun 17' }] },
+  'deal-013': { stage: 'Proposal', stageStatus: 'reviewed', quarter: 'Q2', expansionMultiplier: 0.95, atRisk: true,
+    agentActivity: [{ kind: 'transition', text: 'Advanced Box — Outreach → Proposal', date: 'Jun 16' }] },
+  'deal-010': { stage: 'Outreach', stageStatus: 'sent', quarter: 'Q2', expansionMultiplier: 0.85,
+    agentActivity: [{ kind: 'outreach', text: 'Sent renewal follow-up to HubSpot (Procurement)', date: 'Jun 17' }] },
+  'deal-014': { stage: 'Outreach', stageStatus: 'waiting', quarter: 'Q2', expansionMultiplier: 1.00,
+    agentActivity: [{ kind: 'outreach', text: 'Awaiting reply from Intercom — Legal looped in', date: 'Jun 17' }] },
+  'deal-011': { stage: 'Renewal', stageStatus: 'signed', status: 'renewed', renewedDate: '2026-06-14', quarter: 'Q2', expansionMultiplier: 1.12,
+    agentActivity: [{ kind: 'transition', text: 'Closed Asana — renewal signed (+12% expansion)', date: 'Jun 14' }] },
+
+  // ---- Q3 (mid-stage) ----
+  'deal-015': { stage: 'Qualification', stageStatus: 'qualified', quarter: 'Q3', expansionMultiplier: 1.00,
+    agentActivity: [{ kind: 'qualification', text: 'Scored Okta — flat renewal, low risk → qualified', date: 'Jun 15' }] },
+  'deal-012': { stage: 'Outreach', stageStatus: 'sent', quarter: 'Q3', expansionMultiplier: 1.00,
+    agentActivity: [{ kind: 'outreach', text: 'Drafted + sent first-touch to Zendesk', date: 'Jun 16' }] },
+
+  // ---- Q4 (early-stage) ----
+  'deal-004': { stage: 'Monitoring', stageStatus: 'watching', quarter: 'Q4', expansionMultiplier: 1.00 },
+  'deal-009': { stage: 'Monitoring', stageStatus: 'clock-started', quarter: 'Q4', expansionMultiplier: 1.00 },
+};
+
+// Light early-stage accounts to fill the Monitoring/Qualification/Proposal
+// columns. They never open the live DealDetail (non-evaluation → StagePlaceholder),
+// so they only need identity + stage/status/quarter + safe empty arrays.
+function lightDeal(o) {
+  return {
+    vendor: 'LeanData', vendorInitials: 'LD',
+    vendorLogo: 'https://www.google.com/s2/favicons?domain=leandata.com&sz=128',
+    sellerContact: { name: '—', role: 'Account Manager' },
+    status: 'evaluation', engagementScore: 0, portalViews: 0, chatMessages: 0,
+    portalAccessLog: [], chatTranscript: [], activityLog: [], sharedWith: [],
+    contractHistory: [], progress: [], featureFlags: {},
+    ...o,
+  };
+}
+
+const extraDeals = [
+  lightDeal({ id: 'deal-016', buyerCompany: 'Datadog',  buyerInitials: 'DD', domain: 'datadoghq.com', buyerContact: { name: 'Priya Shah', role: 'VP Engineering' },
+    annualValue: 9100, renewalDate: '2026-11-14', daysToRenewal: 145, lastActive: '2 days ago',
+    stage: 'Qualification', stageStatus: 'watching', quarter: 'Q3', expansionMultiplier: 1.05,
+    agentActivity: [{ kind: 'qualification', text: 'Pulled Datadog contract + usage; scoring renewal risk', date: 'Jun 17' }] }),
+  lightDeal({ id: 'deal-017', buyerCompany: 'Snowflake', buyerInitials: 'SN', domain: 'snowflake.com', buyerContact: { name: 'Greg Olsen', role: 'RevOps Lead' },
+    annualValue: 8800, renewalDate: '2026-09-30', daysToRenewal: 100, lastActive: '4 days ago',
+    stage: 'Proposal', stageStatus: 'drafting', quarter: 'Q3', expansionMultiplier: 1.00,
+    agentActivity: [{ kind: 'proposal', text: 'Generating renewal deck for Snowflake', date: 'Jun 16' }] }),
+  lightDeal({ id: 'deal-018', buyerCompany: 'Calendly', buyerInitials: 'CL', domain: 'calendly.com', buyerContact: { name: 'Dana Reyes', role: 'Ops Manager' },
+    annualValue: 3200, renewalDate: '2026-12-08', daysToRenewal: 169, lastActive: 'Today',
+    stage: 'Monitoring', stageStatus: 'watching', quarter: 'Q4', expansionMultiplier: 1.00 }),
+];
+
+// Enriched export: base deals + STAGE_PLAN overrides + light accounts, with an
+// `arr` alias (canonical-ish name) on every deal. This is what the app consumes.
+export const adminDeals = [...baseDeals, ...extraDeals].map((d) => ({
+  ...d,
+  ...(STAGE_PLAN[d.id] ?? {}),
+  arr: d.annualValue,
+}));
