@@ -92,6 +92,102 @@ function CountdownBox() {
   );
 }
 
+const RENEWAL_STEPS = [
+  {
+    label: 'Review proposal',
+    sub: 'Order form, pricing & what changed',
+    done: true,
+  },
+  {
+    label: 'Loop in your team',
+    sub: 'Finance, Legal, or Procurement sign-off',
+    active: true,
+  },
+  {
+    label: 'Confirm & renew',
+    sub: 'Click Quick Renew when your team is aligned',
+    upcoming: true,
+  },
+];
+
+function RenewalPathStrip() {
+  return (
+    <div
+      className="rounded-xl p-4"
+      style={{
+        background: 'var(--surface-card)',
+        border: '1px solid var(--border-default)',
+        boxShadow: 'var(--shadow-xs)',
+      }}
+    >
+      <p
+        className="text-[10.5px] font-semibold uppercase tracking-widest mb-3.5"
+        style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}
+      >
+        Steps to renew
+      </p>
+      <div>
+        {RENEWAL_STEPS.map((step, i) => (
+          <div key={step.label} className="flex gap-3">
+            <div className="flex flex-col items-center flex-shrink-0">
+              <div
+                className="w-5 h-5 rounded-full flex items-center justify-center"
+                style={{
+                  background: step.done ? 'var(--clay-500)' : 'transparent',
+                  border: step.done
+                    ? 'none'
+                    : step.active
+                    ? '2px solid var(--clay-500)'
+                    : '1.5px solid var(--border-default)',
+                }}
+              >
+                {step.done ? (
+                  <Check size={10} color="white" strokeWidth={3} />
+                ) : (
+                  <span
+                    className="text-[9.5px] font-bold leading-none"
+                    style={{
+                      fontFamily: 'var(--font-mono)',
+                      color: step.active ? 'var(--clay-600)' : 'var(--text-muted)',
+                    }}
+                  >
+                    {i + 1}
+                  </span>
+                )}
+              </div>
+              {i < RENEWAL_STEPS.length - 1 && (
+                <div
+                  className="w-px my-1"
+                  style={{
+                    height: '18px',
+                    background: step.done ? 'var(--clay-300)' : 'var(--border-subtle)',
+                  }}
+                />
+              )}
+            </div>
+            <div className={`${i < RENEWAL_STEPS.length - 1 ? 'pb-3' : ''}`}>
+              <p
+                className="text-[12.5px] font-semibold leading-snug"
+                style={{
+                  color: step.upcoming ? 'var(--text-muted)' : 'var(--text-strong)',
+                }}
+              >
+                {step.label}
+              </p>
+              <p
+                className="text-[11.5px] mt-0.5 leading-snug"
+                style={{ color: 'var(--text-subtle)' }}
+              >
+                {step.sub}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ContractStats() {
   return (
     <div
@@ -1333,6 +1429,7 @@ export default function HomeTab({ selectedOption, onOptionChange, featureFlags, 
     <div className="grid grid-cols-12 gap-5 items-start">
       <div className="col-span-3 space-y-4">
         <CountdownBox />
+        <RenewalPathStrip />
         <ContractStats />
         <UtilizationList showBars={featureFlags?.showUsageData !== false} />
       </div>
