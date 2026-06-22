@@ -1,18 +1,14 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { ChevronRight, ArrowUp, ArrowDown, ChevronsUpDown } from 'lucide-react';
+import { ChevronRight, ArrowUp, ArrowDown } from 'lucide-react';
+// Engagement / recency logic lives in the shared OUT contract so the pipeline UI
+// and the downstream signal can never disagree. See ../../lib/signals.js.
+import { daysInactive, engagementSignal, engagementRank } from '../../lib/signals.js';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 function fmtRenews(dateStr) {
   const [, m, d] = dateStr.split('-').map(Number);
   return `${MONTHS[m - 1]} ${d}`;
-}
-
-// Days since last portal activity, parsed from the "N days ago" lastActive string.
-// "Today"/"Yesterday"/unparseable read as 0 (i.e. not stale).
-export function daysInactive(deal) {
-  const match = deal.lastActive?.match(/^(\d+) days? ago$/);
-  return match ? parseInt(match[1]) : 0;
 }
 
 // Recency line shown on every pipeline row. Stale evaluation deals (≥7 days) read
@@ -24,26 +20,6 @@ function activityLine(deal) {
   const la = deal.lastActive ?? '';
   const when = /^(Today|Yesterday)$/.test(la) ? la.toLowerCase() : la;
   return when ? { text: `Active ${when}`, color: 'var(--text-subtle)' } : null;
-}
-
-// Engagement is its own dimension, independent of renewal urgency (the day count
-// conveys urgency). Returns the at-a-glance signal used by both the left dot and
-// the right-aligned label so the two can never contradict each other.
-export function engagementSignal(deal) {
-  if (deal.status === 'renewed')  return { label: 'Renewed',       color: 'var(--success-600)', muted: true };
-  if (deal.status === 'declined') return { label: 'Declined',      color: 'var(--text-subtle)', muted: true };
-  // Portal opens are the engagement signal (matches the original dot logic). A lone
-  // chat message does NOT count as engaged — e.g. Uber (1 view, 1 msg) must read dark.
-  if (deal.portalViews >= 4) return { label: 'Engaged',       color: 'var(--success-600)' };
-  if (deal.portalViews >= 2) return { label: 'Some activity', color: 'var(--clay-600)'    };
-  return { label: 'Not engaged', color: 'var(--danger-600)' };
-}
-
-// Numeric engagement rank for sorting (mirrors engagementSignal thresholds).
-function engagementRank(deal) {
-  if (deal.portalViews >= 4) return 2;
-  if (deal.portalViews >= 2) return 1;
-  return 0;
 }
 
 // Default sort direction the first time a column is clicked.
@@ -163,7 +139,7 @@ function SortHeader({ col, label, width, sort, onSort, align = 'left' }) {
       </span>
       {active
         ? <Arrow className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'var(--clay-700)' }} />
-        : <ChevronsUpDown className="w-2.5 h-2.5 flex-shrink-0" style={{ color: 'var(--text-subtle)', opacity: 0.55 }} />}
+        : <span className="w-2.5 flex-shrink-0" />}
     </button>
   );
 }
@@ -214,7 +190,6 @@ function CompanyLogo({ deal }) {
 function DealRow({ deal, selected, onSelect, dataSelected }) {
   const signal = engagementSignal(deal);
   const activity = activityLine(deal);
-  const overdue = deal.daysToRenewal <= 0;
   const pillBg = signal.muted ? 'var(--surface-sunken)' : (PILL_BG[signal.color] ?? 'var(--surface-sunken)');
 
   function handleMouseEnter(e) {
@@ -252,18 +227,9 @@ function DealRow({ deal, selected, onSelect, dataSelected }) {
 
       {/* Renews in — urgency */}
       <div className={`${COL.renewal} flex-shrink-0`}>
-        {overdue ? (
-          <span
-            className="font-bold"
-            style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', background: 'var(--danger-600)', color: '#fff', borderRadius: '4px', padding: '2px 6px', letterSpacing: '0.02em' }}
-          >
-            Overdue
-          </span>
-        ) : (
-          <span className="font-semibold" style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: daysColor(deal.daysToRenewal) }}>
-            {deal.daysToRenewal}d
-          </span>
-        )}
+        <span className="font-semibold" style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: daysColor(deal.daysToRenewal) }}>
+          {deal.daysToRenewal}d
+        </span>
       </div>
 
       {/* Last activity / recency */}

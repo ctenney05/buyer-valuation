@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { adminDeals } from '../../data/adminData.js';
 import { qualByDealId } from '../../data/qualificationOutput.js';
 import PipelineList from './PipelineList.jsx';
-import DealDetail from './DealDetail.jsx';
+import AccountPage from './AccountPage.jsx';
 import SnapshotView from './SnapshotView.jsx';
 
 const CLOSED_ARCHIVE_DAYS = 60;
@@ -92,30 +92,39 @@ export default function AdminDashboard({ onModeChange, buyerRenewed, onReset, de
         <div className="px-7 h-16 flex items-center gap-6">
           {/* Left: seller chip + title */}
           <div className="leading-tight flex-shrink-0">
-            <div className="flex items-center gap-2.5 mb-0.5">
-              <SellerChip
-                name={headerDeal.vendor}
-                logo={headerDeal.vendorLogo}
-                initials={headerDeal.vendorInitials}
-              />
+            <div className={`flex items-center gap-2.5 ${selectedDeal ? '' : 'mb-0.5'}`}>
+              {!selectedDeal && (
+                <SellerChip
+                  name={headerDeal.vendor}
+                  logo={headerDeal.vendorLogo}
+                  initials={headerDeal.vendorInitials}
+                />
+              )}
               <div
-                className="font-semibold tracking-[-0.01em]"
-                style={{ fontFamily: 'var(--font-serif)', fontSize: '19px', color: 'var(--text-strong)' }}
+                className="tracking-[-0.01em]"
+                style={{
+                  fontFamily: 'var(--font-serif)',
+                  fontSize: selectedDeal ? '26px' : '19px',
+                  fontWeight: selectedDeal ? 700 : 600,
+                  color: 'var(--text-strong)',
+                }}
               >
-                Account Manager Dashboard
+                {selectedDeal ? `${selectedDeal.buyerCompany} Account Page` : 'Account Manager Dashboard'}
               </div>
             </div>
-            <div
-              className="uppercase"
-              style={{
-                fontFamily: 'var(--font-mono)',
-                fontSize: '10px',
-                letterSpacing: '0.1em',
-                color: 'var(--text-subtle)',
-              }}
-            >
-              Powered by Pareto Agent
-            </div>
+            {!selectedDeal && (
+              <div
+                className="uppercase"
+                style={{
+                  fontFamily: 'var(--font-mono)',
+                  fontSize: '10px',
+                  letterSpacing: '0.1em',
+                  color: 'var(--text-subtle)',
+                }}
+              >
+                Powered by Pareto Agent
+              </div>
+            )}
           </div>
 
           <div className="flex-1" />
@@ -189,7 +198,7 @@ export default function AdminDashboard({ onModeChange, buyerRenewed, onReset, de
       {/* Body — landing (list + snapshot) until an account is opened, then full-width detail */}
       <div className="flex flex-1 overflow-hidden" style={{ height: 'calc(100vh - 64px)' }}>
         {selectedDeal ? (
-          <DealDetail
+          <AccountPage
             deal={selectedDeal}
             featureFlags={dealFlags?.[selectedDeal.id] ?? {}}
             onFlagChange={(key, value) => onFlagChange?.(selectedDeal.id, key, value)}

@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Cream */
+  --cream-50:  #FAF9F5;
+  --cream-100: #F5F3EC;
+  --cream-200: #F0EDE3;
+  --cream-300: #E8E4D7;
+  --cream-400: #DED9C7;
+
+  /* Ink */
+  --ink-900: #141413;
+  --ink-800: #1F1E1C;
+  --ink-700: #34322E;
+  --ink-600: #54514A;
+  --ink-500: #76726A;
+  --ink-400: #9C978C;
+  --ink-300: #C2BDB0;
+
+  /* Clay */
+  --clay-700: #A8492A;
+  --clay-600: #BD5D3A;
+  --clay-500: #D97757;
+  --clay-400: #E2917A;
+  --clay-200: #F2D8CD;
+  --clay-100: #F8EBE4;
+
+  /* Ocean */
+  --ocean-600: #2F5D6E;
+  --ocean-500: #3E7488;
+  --ocean-200: #CDE0E6;
+
+  /* Semantic */
+  --success-700: #2E5C3E;
+  --success-600: #3F7355;
+  --success-100: #DFEDE4;
+  --danger-700:  #8B3525;
+  --danger-600:  #A53F31;
+  --danger-100:  #F4DED9;
+
+  /* Surfaces */
+  --surface-page:   #FAF9F5;
+  --surface-card:   #FFFFFF;
+  --surface-sunken: #F5F3EC;
+
+  /* Borders */
+  --border-subtle:  #E8E4D7;
+  --border-default: #DED9C7;
+  --border-strong:  #CFC8B6;
+
+  /* Text */
+  --text-strong: #141413;
+  --text-body:   #34322E;
+  --text-muted:  #76726A;
+  --text-subtle: #9C978C;
+
+  /* Shadows */
+  --shadow-xs: 0 1px 1px rgba(20,20,19,0.04);
+  --shadow-sm: 0 1px 2px rgba(20,20,19,0.06), 0 1px 1px rgba(20,20,19,0.04);
+
+  /* Fonts */
+  --font-serif: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --font-sans:  'Hanken Grotesk', ui-sans-serif, system-ui, sans-serif;
+  --font-mono:  'Spline Sans Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  background-color: var(--surface-page);
+  color: var(--text-body);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+@keyframes renew-pulse {
+  0%   { box-shadow: 0 0 0 0 rgba(217, 119, 87, 0.55); }
+  70%  { box-shadow: 0 0 0 7px rgba(217, 119, 87, 0);  }
+  100% { box-shadow: 0 0 0 0 rgba(217, 119, 87, 0);    }
+}
+.quick-renew-pulse {
+  animation: renew-pulse 2s ease-out infinite;
+}

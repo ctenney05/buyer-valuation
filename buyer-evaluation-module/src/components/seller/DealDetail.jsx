@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Download, MessageCircle, Flame, ChevronLeft } from 'lucide-react';
+import { Download, MessageCircle, ChevronLeft } from 'lucide-react';
 import { documentGroups } from '../../data/documents';
-import { DocumentRow, GROUP_ICONS } from '../ContractHistory/ContractHistoryTab';
+import { DocumentRow, GROUP_ICONS } from '../buyer/DocumentsTab.jsx';
 
 const cardStyle = {
   background: 'var(--surface-card)',
@@ -17,57 +17,11 @@ function urgencyStyle(days) {
   return            { bg: 'var(--success-100)', bd: 'var(--success-600)', fg: 'var(--success-600)', word: 'On track'       };
 }
 
-export function CountdownBox({ deal }) {
-  // Terminal status states — no countdown
-  if (deal.status === 'renewed') {
-    return (
-      <div className="rounded-xl p-5" style={{ background: 'var(--success-100)', border: '1px solid var(--success-600)', boxShadow: 'var(--shadow-xs)' }}>
-        <div className="flex items-center mb-3.5">
-          <span className="text-[10.5px] tracking-widest uppercase font-semibold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--success-600)' }}>
-            Renewed
-          </span>
-        </div>
-        <p className="text-[13.5px] leading-snug" style={{ color: 'var(--ink-700)' }}>
-          <span className="font-semibold">{deal.buyerCompany}</span> renewal signed
-        </p>
-        <div className="mt-2 flex items-baseline gap-3">
-          <span className="text-[46px] font-semibold leading-none tracking-tight" style={{ fontFamily: 'var(--font-serif)', color: 'var(--success-600)' }}>✓</span>
-          <span className="text-[15px] font-medium" style={{ color: 'var(--ink-700)' }}>
-            Signed {fmtDate(deal.renewedDate)}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  if (deal.status === 'declined') {
-    return (
-      <div className="rounded-xl p-5" style={{ background: 'var(--danger-100)', border: '1px solid var(--danger-600)', boxShadow: 'var(--shadow-xs)' }}>
-        <div className="flex items-center mb-3.5">
-          <span className="text-[10.5px] tracking-widest uppercase font-semibold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--danger-600)' }}>
-            Declined
-          </span>
-        </div>
-        <p className="text-[13.5px] leading-snug" style={{ color: 'var(--ink-700)' }}>
-          <span className="font-semibold">{deal.buyerCompany}</span> did not renew
-        </p>
-        <div className="mt-2 flex items-baseline gap-2">
-          <span className="text-[15px] font-medium" style={{ color: 'var(--danger-600)' }}>
-            Renewal window closed {fmtDate(deal.renewalDate)}
-          </span>
-        </div>
-      </div>
-    );
-  }
-
-  // evaluation — standard countdown
-  const isOverdue   = deal.daysToRenewal <= 0;
+function CountdownBox({ deal }) {
   const displayDays = Math.max(0, deal.daysToRenewal);
   const u           = urgencyStyle(displayDays);
-  const statusWord  = isOverdue ? 'Overdue' : u.word;
-  const ds          = isOverdue
-    ? { bg: 'var(--danger-600)', bd: 'var(--danger-700)', fg: '#ffffff', bodyFg: 'rgba(255,255,255,0.9)', trackBg: 'rgba(255,255,255,0.2)', trackFill: 'rgba(255,255,255,0.85)', dateFg: 'rgba(255,255,255,0.6)' }
-    : { bg: u.bg, bd: u.bd, fg: u.fg, bodyFg: 'var(--ink-700)', trackBg: 'rgba(20,20,19,0.07)', trackFill: u.fg, dateFg: 'var(--text-subtle)' };
+  const statusWord  = u.word;
+  const ds          = { bg: u.bg, bd: u.bd, fg: u.fg, bodyFg: 'var(--ink-700)', trackBg: 'rgba(20,20,19,0.07)', trackFill: u.fg, dateFg: 'var(--text-subtle)' };
 
   const contractStart = (() => {
     const d = new Date(deal.renewalDate);
@@ -81,7 +35,7 @@ export function CountdownBox({ deal }) {
 
   return (
     <div
-      className={`rounded-xl px-5 py-3.5${isOverdue ? ' overdue-pulse' : ''}`}
+      className="rounded-xl px-5 py-3.5"
       style={{ background: ds.bg, border: `1px solid ${ds.bd}`, boxShadow: 'var(--shadow-xs)' }}
     >
       <div className="flex items-baseline justify-between gap-3">
@@ -93,7 +47,7 @@ export function CountdownBox({ deal }) {
             {displayDays}
           </span>
           <span className="text-[13.5px] font-medium" style={{ color: ds.bodyFg }}>
-            {isOverdue ? 'days — renewal date passed' : 'days remaining'}
+            days remaining
           </span>
         </div>
         <span
@@ -309,163 +263,6 @@ function PortalConfigCard({ featureFlags, onFlagChange }) {
   );
 }
 
-// Crazy-Egg-style warm ramp: amber (light) → orange (warm) → red (hot).
-function heatRgb(v) {
-  if (v >= 0.66) return '220,38,38';   // red — hottest
-  if (v >= 0.33) return '249,115,22';  // orange — warm
-  return '245,158,11';                 // amber — light touch
-}
-
-function PreviewBlock({ label, always, on, heat }) {
-  const active = always || on;
-
-  // Heat overlay — always on, but only for VISIBLE blocks (a hidden section
-  // can't have been viewed). Hidden blocks fall through to the dashed render.
-  if (active) {
-    const v = heat ?? 0;
-    const alpha = v === 0 ? 0 : 0.18 + v * 0.62; // 0.18 → 0.80
-    const minutes = v === 0 ? 0 : Math.max(1, Math.round(v * 9));
-    const hot = v >= 0.5;
-    return (
-      <div
-        className="rounded px-2 flex items-center justify-between flex-1"
-        style={{
-          background: v === 0 ? 'var(--surface-sunken)' : `rgba(${heatRgb(v)}, ${alpha})`,
-          border: `1px solid ${v === 0 ? 'var(--border-subtle)' : `rgba(${heatRgb(v)}, 0.9)`}`,
-          minHeight: '32px',
-        }}
-      >
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9.5px', fontWeight: 600, color: hot ? '#fff' : 'var(--ink-700)' }}>
-          {label}
-        </span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8.5px', color: hot ? 'rgba(255,255,255,0.92)' : 'var(--text-subtle)' }}>
-          {v === 0 ? '—' : `${minutes}m`}
-        </span>
-      </div>
-    );
-  }
-
-  // Hidden block (toggled off in portal config) — dashed, dimmed, no heat.
-  return (
-    <div
-      className="rounded px-2 flex items-center flex-1"
-      style={{
-        background: 'transparent',
-        border: '1px dashed var(--border-default)',
-        opacity: 0.45,
-        minHeight: '32px',
-      }}
-    >
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9.5px', color: 'var(--text-subtle)' }}>
-        {label}
-      </span>
-    </div>
-  );
-}
-
-const PREVIEW_TABS = [
-  { label: 'Home',     always: true                          },
-  { label: 'Docs',     flag: 'showContractHistory'           },
-  { label: 'ROI',      flag: 'showROICalculator'             },
-  { label: 'Deck',     flag: 'showProposalDeck'              },
-];
-
-const PREVIEW_COLUMNS = [
-  [
-    { label: 'Countdown',        always: true                },
-    { label: 'Stats',            always: true                },
-    { label: 'Seat utilization', flag: 'showUsageData'       },
-  ],
-  [
-    { label: "What's Changed",   always: true                },
-    { label: 'Order Form',       always: true                },
-    { label: 'Highlights',       flag: 'showHighlights'      },
-  ],
-  [
-    { label: 'Renewal assistant', always: true },
-    { label: 'Seller contacts',   always: true },
-    { label: 'Buyer team',        always: true },
-  ],
-];
-
-function BuyerPreview({ featureFlags, heat }) {
-  const flag = (key) => featureFlags?.[key] !== false;
-  const hasHeat = heat && Object.values(heat).some((v) => v > 0);
-  return (
-    <div className="rounded-xl overflow-hidden flex flex-col flex-1" style={cardStyle}>
-      <div className="px-5 py-3.5 flex items-center justify-between" style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-        <p className="font-semibold uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', color: 'var(--text-subtle)', margin: 0 }}>
-          Buyer View
-        </p>
-        <span
-          className="flex items-center gap-1.5 rounded-full"
-          style={{
-            fontFamily: 'var(--font-mono)', fontSize: '9.5px', fontWeight: 600,
-            padding: '3px 9px', background: 'var(--clay-100)', color: 'var(--clay-700)',
-            border: '1px solid var(--clay-200)',
-          }}
-        >
-          <Flame style={{ width: 11, height: 11 }} />
-          Heatmap
-        </span>
-      </div>
-      <div className="p-4 flex flex-col flex-1">
-        <div className="flex items-center justify-between mb-3 rounded-lg px-3 py-2" style={{ background: 'var(--surface-sunken)', border: '1px solid var(--border-subtle)' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '9px', color: 'var(--text-subtle)' }}>
-            {hasHeat ? 'Time spent per section' : 'No section activity yet'}
-          </span>
-          <div className="flex items-center gap-1.5">
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8.5px', color: 'var(--text-subtle)' }}>less</span>
-            <div style={{ width: 64, height: 8, borderRadius: 4, background: 'linear-gradient(90deg, rgba(245,158,11,0.25), rgba(249,115,22,0.7), rgba(220,38,38,0.95))' }} />
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: '8.5px', color: 'var(--text-subtle)' }}>more</span>
-          </div>
-        </div>
-        {/* Mini tab bar */}
-        <div className="flex gap-1.5 mb-3 flex-wrap">
-          {PREVIEW_TABS.map(tab => {
-            const visible = tab.always || flag(tab.flag);
-            const isFixed = !!tab.always;
-            return (
-              <span
-                key={tab.label}
-                style={{
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: '9.5px',
-                  fontWeight: 600,
-                  padding: '2px 8px',
-                  borderRadius: 4,
-                  background: visible ? (isFixed ? 'var(--border-strong)' : 'var(--ink-700)') : 'var(--surface-sunken)',
-                  color: visible ? '#fff' : 'var(--text-subtle)',
-                  textDecoration: visible ? 'none' : 'line-through',
-                  border: visible ? 'none' : '1px solid var(--border-default)',
-                }}
-              >
-                {tab.label}
-              </span>
-            );
-          })}
-        </div>
-        {/* 3-column schematic — mirrors buyer portal layout */}
-        <div className="grid grid-cols-3 gap-2 flex-1">
-          {PREVIEW_COLUMNS.map((col, ci) => (
-            <div key={ci} className="flex flex-col gap-1.5">
-              {col.map(block => (
-                <PreviewBlock
-                  key={block.label}
-                  label={block.label}
-                  always={!!block.always}
-                  on={block.flag ? flag(block.flag) : undefined}
-                  heat={heat?.[block.label]}
-                />
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // Combined Buying Team + Engagement card. Per Evan: "combine these two — here's
 // what each of these people have done and when." Each stakeholder row folds in
 // their last portal visit (date + time); the chat log lives in the same card.
@@ -623,7 +420,7 @@ function BuyingTeam({ sharedWith, portalAccessLog, buyerContact, chatTranscript,
   );
 }
 
-export default function DealDetail({ deal, featureFlags, onFlagChange, onBack, embedded }) {
+export default function DealDetail({ deal, featureFlags, onFlagChange, onBack }) {
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
 
@@ -644,8 +441,7 @@ export default function DealDetail({ deal, featureFlags, onFlagChange, onBack, e
         </button>
       )}
 
-      {/* Section 1 — Header (hidden when embedded; AccountPage owns the identity header) */}
-      {!embedded && (
+      {/* Section 1 — Header */}
       <div className="rounded-xl px-5 py-4" style={cardStyle}>
         <div className="flex items-center gap-4">
           {/* Company logo */}
@@ -667,8 +463,6 @@ export default function DealDetail({ deal, featureFlags, onFlagChange, onBack, e
               >
                 {deal.buyerCompany}
               </h2>
-              {deal.status === 'renewed'  && <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', background: 'var(--success-100)', color: 'var(--success-600)' }}>Renewed ✓</span>}
-              {deal.status === 'declined' && <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full" style={{ fontFamily: 'var(--font-mono)', background: 'var(--danger-100)', color: 'var(--danger-600)' }}>Declined</span>}
             </div>
             <p
               className="mt-0.5"
@@ -692,10 +486,9 @@ export default function DealDetail({ deal, featureFlags, onFlagChange, onBack, e
           </div>
         </div>
       </div>
-      )}
 
-      {/* Countdown box — hidden when embedded; AccountPage shows it persistently above the tabs */}
-      {!embedded && <CountdownBox deal={deal} />}
+      {/* Countdown box */}
+      <CountdownBox deal={deal} />
 
       {/* Buying Team + engagement — who the buyer pulled in, what each has done, and the chat log */}
       <BuyingTeam
@@ -706,15 +499,8 @@ export default function DealDetail({ deal, featureFlags, onFlagChange, onBack, e
         lastActive={deal.lastActive}
       />
 
-      {/* Section 4 — Portal Configuration + Buyer Preview */}
-      <div className="flex gap-5 items-stretch">
-        <div className="flex-1 min-w-0 flex flex-col">
-          <PortalConfigCard featureFlags={featureFlags} onFlagChange={onFlagChange} />
-        </div>
-        <div className="flex-1 min-w-0 flex flex-col">
-          <BuyerPreview featureFlags={featureFlags} heat={deal.sectionHeat} />
-        </div>
-      </div>
+      {/* Section 4 — Portal Configuration (seller shapes what the buyer sees) */}
+      <PortalConfigCard featureFlags={featureFlags} onFlagChange={onFlagChange} />
 
       {/* Section 6 — Documents */}
       <DocumentsCard deal={deal} />
