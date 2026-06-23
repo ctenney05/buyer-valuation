@@ -4,7 +4,9 @@ import { SLIDES } from '../ProposalDeck/ProposalDeckTab.jsx';
 import {
   renewal, contractStats, utilization,
   orderForm, buyerTeam, sellerContacts,
+  renewalProgress, selectedOrder,
 } from '../../data/renewalData.js';
+import { formatCurrency } from '../../data/format.js';
 
 function daysUntil(dateStr) {
   const today = new Date();
@@ -92,25 +94,20 @@ function CountdownBox() {
   );
 }
 
-const RENEWAL_STEPS = [
-  {
-    label: 'Review proposal',
-    sub: 'Order form, pricing & what changed',
-    done: true,
-  },
-  {
-    label: 'Loop in your team',
-    sub: 'Finance, Legal, or Procurement sign-off',
-    active: true,
-  },
-  {
-    label: 'Confirm & renew',
-    sub: 'Click Quick Renew when your team is aligned',
-    upcoming: true,
-  },
-];
+function initialsOf(name) {
+  return name.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
+}
 
+// Renewal status — read-only, account-team-maintained snapshot of where the renewal
+// stands (owner + due per step + progress). Deliberately NOT a buyer-interactive
+// checklist: research (Jun 22) showed buyer-facing MAPs/checklists go stale and buyers
+// rarely return to tick them off, so this is framed as visibility, not a to-do.
+// Data-driven from renewalProgress (renewalData.js).
 function RenewalPathStrip() {
+  const steps = renewalProgress;
+  const doneCount = steps.filter((s) => s.status === 'done').length;
+  const pct = Math.round((doneCount / steps.length) * 100);
+
   return (
     <div
       className="rounded-xl p-4"
@@ -120,69 +117,111 @@ function RenewalPathStrip() {
         boxShadow: 'var(--shadow-xs)',
       }}
     >
-      <p
-        className="text-[10.5px] font-semibold uppercase tracking-widest mb-3.5"
-        style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}
-      >
-        Steps to renew
+      <div className="flex items-center justify-between mb-1">
+        <p
+          className="text-[10.5px] font-semibold uppercase tracking-widest"
+          style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}
+        >
+          Renewal status
+        </p>
+        <span
+          className="text-[10.5px] font-semibold"
+          style={{ fontFamily: 'var(--font-mono)', color: 'var(--clay-700)' }}
+        >
+          {doneCount} of {steps.length} complete
+        </span>
+      </div>
+      <p className="text-[10.5px] mb-3" style={{ color: 'var(--text-subtle)' }}>
+        Maintained by your account team — for visibility, not a checklist.
       </p>
+
+      {/* Progress bar (matches CountdownBox styling) */}
+      <div
+        className="h-1.5 rounded-full overflow-hidden mb-4"
+        style={{ background: 'rgba(20,20,19,0.07)' }}
+      >
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${Math.max(4, pct)}%`, background: 'var(--clay-500)' }}
+        />
+      </div>
+
       <div>
-        {RENEWAL_STEPS.map((step, i) => (
-          <div key={step.label} className="flex gap-3">
-            <div className="flex flex-col items-center flex-shrink-0">
-              <div
-                className="w-5 h-5 rounded-full flex items-center justify-center"
-                style={{
-                  background: step.done ? 'var(--clay-500)' : 'transparent',
-                  border: step.done
-                    ? 'none'
-                    : step.active
-                    ? '2px solid var(--clay-500)'
-                    : '1.5px solid var(--border-default)',
-                }}
-              >
-                {step.done ? (
-                  <Check size={10} color="white" strokeWidth={3} />
-                ) : (
-                  <span
-                    className="text-[9.5px] font-bold leading-none"
+        {steps.map((step, i) => {
+          const done = step.status === 'done';
+          const active = step.status === 'current';
+          const last = i === steps.length - 1;
+          return (
+            <div key={step.label} className="flex gap-3">
+              <div className="flex flex-col items-center flex-shrink-0">
+                <div
+                  className="w-5 h-5 rounded-full flex items-center justify-center"
+                  style={{
+                    background: done ? 'var(--clay-500)' : 'transparent',
+                    border: done
+                      ? 'none'
+                      : active
+                      ? '2px solid var(--clay-500)'
+                      : '1.5px solid var(--border-default)',
+                  }}
+                >
+                  {done ? (
+                    <Check size={10} color="white" strokeWidth={3} />
+                  ) : (
+                    <span
+                      className="text-[9.5px] font-bold leading-none"
+                      style={{
+                        fontFamily: 'var(--font-mono)',
+                        color: active ? 'var(--clay-600)' : 'var(--text-muted)',
+                      }}
+                    >
+                      {i + 1}
+                    </span>
+                  )}
+                </div>
+                {!last && (
+                  <div
+                    className="w-px my-1"
                     style={{
-                      fontFamily: 'var(--font-mono)',
-                      color: step.active ? 'var(--clay-600)' : 'var(--text-muted)',
+                      height: '38px',
+                      background: done ? 'var(--clay-300)' : 'var(--border-subtle)',
                     }}
-                  >
-                    {i + 1}
-                  </span>
+                  />
                 )}
               </div>
-              {i < RENEWAL_STEPS.length - 1 && (
-                <div
-                  className="w-px my-1"
-                  style={{
-                    height: '18px',
-                    background: step.done ? 'var(--clay-300)' : 'var(--border-subtle)',
-                  }}
-                />
-              )}
+              <div className={`flex-1 min-w-0 ${!last ? 'pb-3' : ''}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <p
+                    className="text-[12.5px] font-semibold leading-snug"
+                    style={{ color: step.status === 'upcoming' ? 'var(--text-muted)' : 'var(--text-strong)' }}
+                  >
+                    {step.label}
+                  </p>
+                  <span
+                    className="text-[10.5px] flex-shrink-0 mt-0.5"
+                    style={{ fontFamily: 'var(--font-mono)', color: active ? 'var(--clay-700)' : 'var(--text-subtle)' }}
+                  >
+                    {step.due}
+                  </span>
+                </div>
+                <p className="text-[11.5px] mt-0.5 leading-snug" style={{ color: 'var(--text-subtle)' }}>
+                  {step.sub}
+                </p>
+                <div className="flex items-center gap-1.5 mt-1.5">
+                  <span
+                    className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold flex-shrink-0"
+                    style={{ fontFamily: 'var(--font-mono)', background: 'var(--clay-100)', color: 'var(--clay-700)' }}
+                  >
+                    {initialsOf(step.owner)}
+                  </span>
+                  <span className="text-[10.5px]" style={{ color: 'var(--text-muted)' }}>
+                    {step.owner} · {step.ownerRole}
+                  </span>
+                </div>
+              </div>
             </div>
-            <div className={`${i < RENEWAL_STEPS.length - 1 ? 'pb-3' : ''}`}>
-              <p
-                className="text-[12.5px] font-semibold leading-snug"
-                style={{
-                  color: step.upcoming ? 'var(--text-muted)' : 'var(--text-strong)',
-                }}
-              >
-                {step.label}
-              </p>
-              <p
-                className="text-[11.5px] mt-0.5 leading-snug"
-                style={{ color: 'var(--text-subtle)' }}
-              >
-                {step.sub}
-              </p>
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -335,7 +374,9 @@ function UtilizationList({ showBars }) {
 
 // ── Center column ─────────────────────────────────────────────────────────────
 
-function WhatChangedCard() {
+function WhatChangedCard({ selectedOption }) {
+  const order = selectedOrder(selectedOption ?? 0);
+  const pct = Math.round(((order.priceValue - order.prevTotalValue) / order.prevTotalValue) * 100);
   return (
     <div
       className="rounded-xl p-5"
@@ -358,8 +399,10 @@ function WhatChangedCard() {
             Price
           </span>
           <span className="text-[12px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-body)' }}>
-            {orderForm.prevTotal} → <strong>{orderForm.total}</strong>
-            <span style={{ color: 'var(--clay-600)' }}> ↑ 5%</span>
+            {formatCurrency(order.prevTotalValue)} → <strong>{formatCurrency(order.priceValue)}</strong>
+            {pct !== 0 && (
+              <span style={{ color: pct > 0 ? 'var(--clay-600)' : 'var(--success-600)' }}> {pct > 0 ? '↑' : '↓'} {Math.abs(pct)}%</span>
+            )}
           </span>
         </div>
 
@@ -409,6 +452,10 @@ const HIGHLIGHT_COLORS = {
 
 function ProposedChanges({ selectedOption, onOptionChange, showHighlights }) {
   const [highlightsOn, setHighlightsOn] = useState(false);
+
+  // Live re-pricing: line items + total follow the selected renewal option.
+  const order = selectedOrder(selectedOption ?? 0);
+  const delta = order.priceValue - order.prevTotalValue;
 
   return (
     <div
@@ -614,7 +661,7 @@ function ProposedChanges({ selectedOption, onOptionChange, showHighlights }) {
                 </tr>
               </thead>
               <tbody>
-                {orderForm.lineItems.map((item, i) => (
+                {order.lineItems.map((item, i) => (
                   <tr key={i} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                     <td className="py-3 pr-3 align-top whitespace-pre-line" style={{ color: 'var(--text-muted)' }}>{item.term}</td>
                     <td className="py-3 pr-3 font-medium align-top" style={{ color: 'var(--text-body)' }}>{item.product}</td>
@@ -652,9 +699,21 @@ function ProposedChanges({ selectedOption, onOptionChange, showHighlights }) {
                 </div>
               </div>
             )}
-            <div className="flex justify-end mt-2 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
-              <span className="text-xs font-medium mr-4" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>TOTAL:</span>
-              <span className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-strong)' }}>{orderForm.total}</span>
+            <div className="flex items-center justify-end gap-3 mt-2 pt-2" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+              {delta !== 0 && (
+                <span
+                  className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full"
+                  style={{
+                    fontFamily: 'var(--font-mono)',
+                    background: delta > 0 ? 'var(--clay-100)' : 'var(--success-100)',
+                    color: delta > 0 ? 'var(--clay-700)' : 'var(--success-600)',
+                  }}
+                >
+                  {delta > 0 ? '▲' : '▼'} {formatCurrency(Math.abs(delta))} vs last term
+                </span>
+              )}
+              <span className="text-xs font-medium" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>TOTAL:</span>
+              <span className="text-sm font-bold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-strong)' }}>{formatCurrency(order.priceValue)}/yr</span>
             </div>
           </div>
 
@@ -984,40 +1043,63 @@ function ChatbotWidget() {
   );
 }
 
-// ── Calendly-style scheduling picker ──────────────────────────────────────────
+// ── BookIt-style scheduling picker ────────────────────────────────────────────
 
 const SLOT_TIMES = [
   '9:00 AM', '9:30 AM', '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM',
   '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
 ];
 
-// Next `count` weekdays starting tomorrow. Browser context — real Date is fine.
-function buildBookingDays(count = 6) {
-  const days = [];
-  const cur = new Date();
-  cur.setHours(0, 0, 0, 0);
+const WEEKDAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+// First bookable weekday strictly after `from` (skips weekends).
+function firstBookableDay(from) {
+  const d = new Date(from);
+  d.setHours(0, 0, 0, 0);
   let guard = 0;
-  while (days.length < count && guard < 30) {
+  do {
+    d.setDate(d.getDate() + 1);
     guard += 1;
-    cur.setDate(cur.getDate() + 1);
-    const dow = cur.getDay();
-    if (dow === 0 || dow === 6) continue; // skip weekends
-    days.push(new Date(cur));
-  }
-  return days;
+  } while ((d.getDay() === 0 || d.getDay() === 6) && guard < 30);
+  return d;
 }
 
-// Stable, deterministic "already booked" pattern — no Math.random so it never
-// shifts mid-demo, but each day shows a different set of open times.
-function slotBooked(dateIdx, slotIdx) {
-  // Additive day term (not a multiplier) so no single day shares the modulus
-  // and ends up fully booked — every day keeps a mix of open/taken slots.
-  return (slotIdx + dateIdx * 2 + 1) % 5 === 0;
+// A calendar cell is bookable if it's a weekday strictly after today.
+function isBookableDay(date, today) {
+  if (!date) return false;
+  if (date.getDay() === 0 || date.getDay() === 6) return false;
+  return date.getTime() > today.getTime();
+}
+
+// Weeks (arrays of 7) for the given month; null pads leading/trailing cells.
+function buildMonthMatrix(year, month) {
+  const startDow = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const cells = [];
+  for (let i = 0; i < startDow; i += 1) cells.push(null);
+  for (let d = 1; d <= daysInMonth; d += 1) cells.push(new Date(year, month, d));
+  while (cells.length % 7 !== 0) cells.push(null);
+  const weeks = [];
+  for (let i = 0; i < cells.length; i += 7) weeks.push(cells.slice(i, i + 7));
+  return weeks;
+}
+
+// Stable, deterministic "already booked" pattern keyed on the calendar date — no
+// Math.random so it never shifts mid-demo, and each day shows a different set of
+// open times. Additive day term keeps every day a mix of open/taken slots.
+function slotBooked(date, slotIdx) {
+  return (slotIdx + date.getDate() * 2 + 1) % 5 === 0;
 }
 
 function ScheduleModal({ am, onClose, onBooked }) {
-  const days = useMemo(() => buildBookingDays(6), []);
-  const [dateIdx, setDateIdx] = useState(0);
+  const today = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, []);
+  const firstDay = useMemo(() => firstBookableDay(today), [today]);
+  const [view, setView] = useState({ year: firstDay.getFullYear(), month: firstDay.getMonth() });
+  const [selectedDate, setSelectedDate] = useState(firstDay);
   const [slot, setSlot] = useState(null);
   const [confirmed, setConfirmed] = useState(false);
   const [confirmHovered, setConfirmHovered] = useState(false);
@@ -1028,12 +1110,28 @@ function ScheduleModal({ am, onClose, onBooked }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  const selectedDay = days[dateIdx];
-  const dayLabel = selectedDay.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  const weeks = useMemo(() => buildMonthMatrix(view.year, view.month), [view]);
+  const monthLabel = new Date(view.year, view.month, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const canGoPrev = view.year > today.getFullYear() || (view.year === today.getFullYear() && view.month > today.getMonth());
+  const dayLabel = selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+  function shiftMonth(delta) {
+    setView((v) => {
+      let m = v.month + delta;
+      let y = v.year;
+      if (m < 0) { m = 11; y -= 1; }
+      if (m > 11) { m = 0; y += 1; }
+      return { year: y, month: m };
+    });
+  }
+
+  function sameDay(a, b) {
+    return a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+  }
 
   function handleConfirm() {
     setConfirmed(true);
-    if (onBooked) onBooked({ day: selectedDay, slot });
+    if (onBooked) onBooked({ day: selectedDate, slot });
   }
 
   return (
@@ -1050,7 +1148,7 @@ function ScheduleModal({ am, onClose, onBooked }) {
       >
         <div
           className="relative rounded-2xl overflow-hidden w-full flex flex-col"
-          style={{ maxWidth: 720, maxHeight: '90vh', background: 'var(--surface-card)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-lg, 0 16px 48px rgba(0,0,0,0.18))' }}
+          style={{ maxWidth: 820, maxHeight: '90vh', background: 'var(--surface-card)', border: '1px solid var(--border-default)', boxShadow: 'var(--shadow-lg, 0 16px 48px rgba(0,0,0,0.18))' }}
           onClick={(e) => e.stopPropagation()}
         >
           {/* Close */}
@@ -1101,7 +1199,7 @@ function ScheduleModal({ am, onClose, onBooked }) {
                   <div className="flex items-center gap-2.5">
                     <CalendarDays className="w-4 h-4 flex-shrink-0" style={{ color: 'var(--ocean-600)' }} />
                     <span className="text-[12.5px] font-medium" style={{ color: 'var(--ocean-600)' }}>
-                      {selectedDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {slot}
+                      {selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} · {slot}
                     </span>
                   </div>
                 )}
@@ -1109,12 +1207,15 @@ function ScheduleModal({ am, onClose, onBooked }) {
               <p className="text-[11.5px] mt-5 leading-relaxed" style={{ color: 'var(--text-subtle)' }}>
                 Walk through your proposed order form, pricing, and any redlines before you sign.
               </p>
+              <p className="text-[10px] uppercase tracking-widest mt-6" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+                Powered by <span style={{ color: 'var(--ocean-600)', fontWeight: 600 }}>BookIt</span>
+              </p>
             </div>
 
             {/* Right — picker / confirmation */}
-            <div className="p-6 flex-1 overflow-y-auto" style={{ minWidth: 0 }}>
+            <div className="p-6 flex-1 flex flex-col" style={{ minWidth: 0 }}>
               {confirmed ? (
-                <div className="flex flex-col items-center justify-center text-center h-full py-6">
+                <div className="flex flex-col items-center justify-center text-center flex-1 py-6">
                   <div
                     className="flex items-center justify-center rounded-full mb-4"
                     style={{ width: 52, height: 52, background: '#DCFCE7', color: '#15803D' }}
@@ -1138,69 +1239,96 @@ function ScheduleModal({ am, onClose, onBooked }) {
                 </div>
               ) : (
                 <>
-                  {/* Date strip */}
-                  <p className="text-[11px] uppercase tracking-widest mb-2.5" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
-                    Select a day
-                  </p>
-                  <div className="flex gap-2 mb-5 overflow-x-auto pb-1">
-                    {days.map((d, i) => {
-                      const active = i === dateIdx;
-                      return (
-                        <button
-                          key={i}
-                          onClick={() => { setDateIdx(i); setSlot(null); }}
-                          className="flex flex-col items-center rounded-lg flex-shrink-0"
-                          style={{
-                            width: 60, padding: '8px 0',
-                            background: active ? 'var(--ocean-600)' : 'var(--surface-card)',
-                            border: `1px solid ${active ? 'var(--ocean-600)' : 'var(--border-default)'}`,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <span className="text-[9.5px] uppercase tracking-wide" style={{ fontFamily: 'var(--font-mono)', color: active ? 'rgba(255,255,255,0.8)' : 'var(--text-subtle)' }}>
-                            {d.toLocaleDateString('en-US', { weekday: 'short' })}
-                          </span>
-                          <span className="text-[18px] font-semibold leading-tight" style={{ color: active ? '#fff' : 'var(--text-strong)' }}>
-                            {d.getDate()}
-                          </span>
-                          <span className="text-[9px] uppercase" style={{ fontFamily: 'var(--font-mono)', color: active ? 'rgba(255,255,255,0.8)' : 'var(--text-subtle)' }}>
-                            {d.toLocaleDateString('en-US', { month: 'short' })}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+                  <div className="flex flex-col sm:flex-row gap-5 flex-1" style={{ minHeight: 0 }}>
+                    {/* Month calendar */}
+                    <div className="flex-1" style={{ minWidth: 0 }}>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-[13px] font-semibold" style={{ color: 'var(--text-strong)' }}>{monthLabel}</p>
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={() => canGoPrev && shiftMonth(-1)}
+                            disabled={!canGoPrev}
+                            aria-label="Previous month"
+                            className="flex items-center justify-center rounded-md"
+                            style={{ width: 28, height: 28, background: 'transparent', border: '1px solid var(--border-default)', cursor: canGoPrev ? 'pointer' : 'not-allowed', color: canGoPrev ? 'var(--ocean-600)' : 'var(--text-subtle)', opacity: canGoPrev ? 1 : 0.4 }}
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => shiftMonth(1)}
+                            aria-label="Next month"
+                            className="flex items-center justify-center rounded-md"
+                            style={{ width: 28, height: 28, background: 'transparent', border: '1px solid var(--border-default)', cursor: 'pointer', color: 'var(--ocean-600)' }}
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-7 gap-1 mb-1">
+                        {WEEKDAY_LABELS.map((w, i) => (
+                          <div key={i} className="text-center text-[10px] uppercase" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>{w}</div>
+                        ))}
+                      </div>
+                      <div className="grid grid-cols-7 gap-1">
+                        {weeks.flat().map((d, i) => {
+                          if (!d) return <div key={i} />;
+                          const bookable = isBookableDay(d, today);
+                          const active = sameDay(d, selectedDate);
+                          return (
+                            <button
+                              key={i}
+                              disabled={!bookable}
+                              onClick={() => { setSelectedDate(d); setSlot(null); }}
+                              className="flex items-center justify-center rounded-lg text-[12.5px] font-medium transition-colors"
+                              style={{
+                                height: 34,
+                                background: active ? 'var(--ocean-600)' : 'transparent',
+                                color: active ? '#fff' : bookable ? 'var(--ocean-600)' : 'var(--text-subtle)',
+                                border: `1px solid ${active ? 'var(--ocean-600)' : bookable ? 'var(--ocean-200)' : 'transparent'}`,
+                                cursor: bookable ? 'pointer' : 'default',
+                                opacity: bookable ? 1 : 0.35,
+                              }}
+                            >
+                              {d.getDate()}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
 
-                  {/* Time grid */}
-                  <div className="flex items-center justify-between mb-2.5">
-                    <p className="text-[11px] uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
-                      Select a time
-                    </p>
-                    <span className="text-[10px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>Pacific Time</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 mb-6">
-                    {SLOT_TIMES.map((t, si) => {
-                      const booked = slotBooked(dateIdx, si);
-                      const active = slot === t;
-                      return (
-                        <button
-                          key={t}
-                          disabled={booked}
-                          onClick={() => setSlot(t)}
-                          className="rounded-lg py-2 text-[12.5px] font-medium transition-colors"
-                          style={{
-                            background: active ? 'var(--ocean-600)' : booked ? 'var(--surface-sunken)' : 'var(--surface-card)',
-                            color: active ? '#fff' : booked ? 'var(--text-subtle)' : 'var(--ocean-600)',
-                            border: `1px solid ${active ? 'var(--ocean-600)' : booked ? 'var(--border-subtle)' : 'var(--ocean-200)'}`,
-                            cursor: booked ? 'not-allowed' : 'pointer',
-                            textDecoration: booked ? 'line-through' : 'none',
-                            opacity: booked ? 0.6 : 1,
-                          }}
-                        >
-                          {t}
-                        </button>
-                      );
-                    })}
+                    {/* Time column */}
+                    <div className="flex-shrink-0 sm:w-[164px] flex flex-col" style={{ minHeight: 0 }}>
+                      <div className="flex items-center justify-between mb-1">
+                        <p className="text-[12px] font-semibold" style={{ color: 'var(--text-strong)' }}>
+                          {selectedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                        </p>
+                      </div>
+                      <p className="text-[10px] mb-2" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>Pacific Time</p>
+                      <div className="flex flex-col gap-1.5 overflow-y-auto pr-1" style={{ maxHeight: 248 }}>
+                        {SLOT_TIMES.map((t, si) => {
+                          const booked = slotBooked(selectedDate, si);
+                          const active = slot === t;
+                          return (
+                            <button
+                              key={t}
+                              disabled={booked}
+                              onClick={() => setSlot(t)}
+                              className="rounded-lg py-2 text-[12.5px] font-medium transition-colors flex-shrink-0"
+                              style={{
+                                background: active ? 'var(--ocean-600)' : booked ? 'var(--surface-sunken)' : 'var(--surface-card)',
+                                color: active ? '#fff' : booked ? 'var(--text-subtle)' : 'var(--ocean-600)',
+                                border: `1px solid ${active ? 'var(--ocean-600)' : booked ? 'var(--border-subtle)' : 'var(--ocean-200)'}`,
+                                cursor: booked ? 'not-allowed' : 'pointer',
+                                textDecoration: booked ? 'line-through' : 'none',
+                                opacity: booked ? 0.6 : 1,
+                              }}
+                            >
+                              {t}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
 
                   <button
@@ -1208,7 +1336,7 @@ function ScheduleModal({ am, onClose, onBooked }) {
                     disabled={!slot}
                     onMouseEnter={() => setConfirmHovered(true)}
                     onMouseLeave={() => setConfirmHovered(false)}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-[13.5px] font-semibold transition-colors"
+                    className="w-full flex items-center justify-center gap-2 rounded-lg py-2.5 text-[13.5px] font-semibold transition-colors mt-4 flex-shrink-0"
                     style={{
                       background: !slot ? 'var(--surface-sunken)' : confirmHovered ? 'var(--ocean-700, #1f6f8b)' : 'var(--ocean-600)',
                       color: !slot ? 'var(--text-subtle)' : '#fff',
@@ -1217,7 +1345,7 @@ function ScheduleModal({ am, onClose, onBooked }) {
                     }}
                   >
                     <CalendarDays className="w-4 h-4" />
-                    {slot ? `Confirm — ${selectedDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${slot}` : 'Pick a time to continue'}
+                    {slot ? `Continue with ${selectedDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${slot}` : 'Select a time to continue'}
                   </button>
                 </>
               )}
@@ -1429,13 +1557,13 @@ export default function HomeTab({ selectedOption, onOptionChange, featureFlags, 
     <div className="grid grid-cols-12 gap-5 items-start">
       <div className="col-span-3 space-y-4">
         <CountdownBox />
-        <RenewalPathStrip />
         <ContractStats />
+        <RenewalPathStrip />
         <UtilizationList showBars={featureFlags?.showUsageData !== false} />
       </div>
 
       <div className="col-span-6 space-y-4 self-stretch flex flex-col">
-        <WhatChangedCard />
+        <WhatChangedCard selectedOption={selectedOption} />
         <div className="flex-1">
           <ProposedChanges
             selectedOption={selectedOption}

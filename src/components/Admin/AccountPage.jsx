@@ -1,5 +1,5 @@
 import { useState, Fragment } from 'react';
-import { ChevronLeft, Check, Lock, BarChart3, Mail, FileText, Users, PenLine } from 'lucide-react';
+import { ChevronLeft, Check, Lock, BarChart3, Mail, FileText, Users, PenLine, Handshake } from 'lucide-react';
 import DealDetail, { CountdownBox } from './DealDetail.jsx';
 
 const cardStyle = {
@@ -17,13 +17,14 @@ const STAGES = [
   { id: 'outreach',      label: 'Outreach',         icon: Mail,      owner: 'Outreach agent',          desc: 'Email drafting and the draft → sent → waiting → engaged lifecycle render here.' },
   { id: 'proposal',      label: 'Proposal',         icon: FileText,  owner: 'Proposal agent',          desc: 'The generated renewal deck and pricing story render here.' },
   { id: 'evaluation',    label: 'Buyer Evaluation', icon: Users,     owner: 'Buyer Evaluation module', desc: '' },
-  { id: 'renewal',       label: 'Renewal',          icon: PenLine,   owner: 'Decision & signature',    desc: 'Closes out when the buyer signs the renewal.' },
+  { id: 'negotiated',    label: 'Negotiated',       icon: Handshake, owner: 'Negotiation',             desc: 'Final terms, redlines, and pricing are negotiated to agreement here.' },
+  { id: 'closed',        label: 'Closed',           icon: PenLine,   owner: 'Decision & signature',    desc: 'Closes out when the buyer signs the renewal.' },
 ];
 
-const STAGE_INDEX = { Qualification: 0, Outreach: 1, Proposal: 2, 'Buyer Evaluation': 3, Renewal: 4 };
+const STAGE_INDEX = { Qualification: 0, Outreach: 1, Proposal: 2, 'Buyer Evaluation': 3, Negotiated: 4, Closed: 5 };
 
 function currentStageIdx(deal) {
-  if (deal.status === 'renewed' || deal.status === 'declined') return 4;
+  if (deal.status === 'renewed' || deal.status === 'declined') return 5;
   return STAGE_INDEX[deal.stage] ?? 3;
 }
 

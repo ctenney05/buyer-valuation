@@ -24,7 +24,7 @@ import ProposalDeckTab from './ProposalDeckTab.jsx';
 //   featureFlags  which tabs/sections show (set by the seller in PortalConfigCard).
 //                 A flag === false hides; anything else shows.
 //   onDecision    called when the buyer confirms a renewal — the hub's primary
-//                 OUTBOUND signal. Receives { dealId, status:'renewed', selectedOption }.
+//                 OUTBOUND signal. Receives { dealId, status:'renewed', selectedOption, signature }.
 //   dealId        id of the deal this portal represents (for the onDecision payload).
 // ===========================================================================
 
@@ -48,9 +48,9 @@ export default function BuyerPortal({ featureFlags = {}, onDecision, dealId = 'd
   const resolvedTab = tabHidden ? 'home' : activeTab;
   const TabComponent = TAB_COMPONENTS[resolvedTab] ?? HomeTab;
 
-  function handleRenew() {
+  function handleRenew(signature) {
     setRenewed(true);
-    onDecision?.({ dealId, status: 'renewed', selectedOption });
+    onDecision?.({ dealId, status: 'renewed', selectedOption, signature });
   }
 
   return (

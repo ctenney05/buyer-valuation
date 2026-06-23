@@ -250,9 +250,11 @@ function DealRow({ deal, selected, onSelect, dataSelected }) {
         </p>
       </div>
 
-      {/* Renews in — urgency */}
+      {/* Renews in — urgency (closed deals carry no urgency: show a muted dash) */}
       <div className={`${COL.renewal} flex-shrink-0`}>
-        {overdue ? (
+        {signal.muted ? (
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: '13px', color: 'var(--text-subtle)' }}>—</span>
+        ) : overdue ? (
           <span
             className="font-bold"
             style={{ fontFamily: 'var(--font-mono)', fontSize: '10px', background: 'var(--danger-600)', color: '#fff', borderRadius: '4px', padding: '2px 6px', letterSpacing: '0.02em' }}

@@ -27,7 +27,8 @@ const STAGES = [
   { id: 'outreach',  label: 'Outreach',   owner: 'Outreach',          who: 'Parth', summary: 'Renewal emails · sequencing · comps tracking' },
   { id: 'proposal',  label: 'Proposal',   owner: 'Proposal',          who: 'Dean',  summary: 'Tailored deck · pricing justification by story type' },
   { id: 'buyerEval', label: 'Buyer Eval', owner: 'Buyer Evaluation',  who: 'Cooper', summary: 'Countdown · buying-team engagement · portal config · documents', live: true },
-  { id: 'renewal',   label: 'Renewal',    owner: 'Renewal',           who: '—',     summary: 'Signed agreement · DocuSign · post-renewal handoff' },
+  { id: 'negotiated', label: 'Negotiated', owner: 'Negotiation',       who: '—',     summary: 'Final terms · redlines · pricing agreement' },
+  { id: 'closed',     label: 'Closed',     owner: 'Closed',            who: '—',     summary: 'Signed agreement · DocuSign · post-renewal handoff' },
 ];
 
 function daysColor(days) {

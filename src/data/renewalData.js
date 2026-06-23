@@ -53,9 +53,44 @@ export const orderForm = {
   salesRep: 'Jordan Lee',
   orderType: 'Renewal',
   expirationDate: '06/23/2026',
+  // Each option carries a numeric priceValue + its own line items/total so the
+  // order form can re-price live as the buyer switches plans. selectedOrder()
+  // (below) resolves the active option; top-level lineItems/total are fallbacks.
   renewalOptions: [
-    { label: 'Renew Current Plan',     price: '$6,800/yr',  selected: true  },
-    { label: 'Upgrade to Enterprise+', price: '$8,500/yr',  selected: false },
+    {
+      label: 'Renew Current Plan',
+      price: '$6,800/yr',
+      priceValue: 6800,
+      total: '$6,800',
+      selected: true,
+      lineItems: [
+        {
+          term: '6/23/2026 to\n6/22/2027',
+          product: 'LeanData Revenue Orchestration — Advanced User Subscription License',
+          qty: 250,
+          unitPrice: '$27.20',
+          unitNote: '/user/year',
+          finalPrice: '$6,800',
+        },
+      ],
+    },
+    {
+      label: 'Upgrade to Enterprise+',
+      price: '$8,500/yr',
+      priceValue: 8500,
+      total: '$8,500',
+      selected: false,
+      lineItems: [
+        {
+          term: '6/23/2026 to\n6/22/2027',
+          product: 'LeanData Revenue Orchestration — Enterprise+ User Subscription License',
+          qty: 250,
+          unitPrice: '$34.00',
+          unitNote: '/user/year',
+          finalPrice: '$8,500',
+        },
+      ],
+    },
   ],
   lineItems: [
     {
@@ -70,6 +105,7 @@ export const orderForm = {
   priceNote: 'List price $30.00/user/year · ~9.3% negotiated discount · billed annually',
   pricingJustification: 'Reflects a standard 5% annual seat-price increase over the prior term ($26.00 → $27.20/user/year), applied at renewal per enterprise agreement terms. Multi-year pricing available upon request.',
   prevTotal: '$6,476',
+  prevTotalValue: 6476,
   total: '$6,800',
   msaUrl: 'https://www.leandata.com/terms-of-service/',
   keyChanges: [
@@ -97,12 +133,29 @@ export const orderForm = {
   ],
 };
 
+// Resolve the active renewal option (with its line items + total), falling back
+// to the top-level orderForm fields. Used by the buyer order form + the Quick
+// Renew / sign modal so the on-screen total and the signed amount never drift.
+export function selectedOrder(idx = 0) {
+  const opt = orderForm.renewalOptions[idx] ?? orderForm.renewalOptions[0];
+  return {
+    label: opt.label,
+    price: opt.price,
+    priceValue: opt.priceValue ?? orderForm.prevTotalValue,
+    total: opt.total ?? orderForm.total,
+    lineItems: opt.lineItems ?? orderForm.lineItems,
+    prevTotalValue: orderForm.prevTotalValue,
+  };
+}
+
+// Buyer-facing mutual action plan — dated path to close with an owner per step.
+// status: 'done' | 'current' | 'upcoming'. Owners map to buyerTeam roles.
 export const renewalProgress = [
-  { label: 'Proposal Sent', date: 'Jun 1',  completed: true,  current: false },
-  { label: 'Hub Accessed',  date: 'Jun 10', completed: true,  current: false },
-  { label: 'Under Review',  date: null,     completed: false, current: true  },
-  { label: 'Decision',      date: null,     completed: false, current: false },
-  { label: 'Signed',        date: null,     completed: false, current: false },
+  { label: 'Review proposal',     sub: 'Order form, pricing & redlines',          owner: 'Courtney Kim', ownerRole: 'Champion',    due: 'Jun 24', status: 'done'     },
+  { label: 'Finance sign-off',    sub: 'Budget approval for renewal spend',       owner: 'James Rivera', ownerRole: 'Finance',     due: 'Jun 30', status: 'current'  },
+  { label: 'Legal review',        sub: 'Auto-renewal clause & updated 2024 DPA',  owner: 'Amy Liu',      ownerRole: 'Legal',       due: 'Jul 8',  status: 'upcoming' },
+  { label: 'Procurement approval', sub: 'Vendor record & PO setup',               owner: 'Marcus Brown', ownerRole: 'Procurement', due: 'Jul 15', status: 'upcoming' },
+  { label: 'Sign & renew',        sub: 'Quick Renew when the team is aligned',    owner: 'Courtney Kim', ownerRole: 'Champion',    due: 'Jul 22', status: 'upcoming' },
 ];
 
 export const buyerTeam = [

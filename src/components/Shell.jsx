@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { X, CheckCircle } from 'lucide-react';
-import { renewal, orderForm } from '../data/renewalData.js';
+import { X, CheckCircle, PenLine, ChevronLeft } from 'lucide-react';
+import { renewal, orderForm, selectedOrder } from '../data/renewalData.js';
+import { formatCurrency } from '../data/format.js';
 
 const TABS = [
   { id: 'home',             label: 'Home'             },
@@ -49,12 +50,26 @@ function PartyChip({ name, initials, kind }) {
 
 export default function Shell({ activeTab, onTabChange, onModeChange, onRenew, renewed, selectedOption, featureFlags, children }) {
   const [confirming, setConfirming] = useState(false);
+  const [signStep, setSignStep] = useState('summary');   // 'summary' | 'sign'
+  const [signName, setSignName] = useState('');
+  const [signTitle, setSignTitle] = useState('');
+  const [agreed, setAgreed] = useState(false);
+  const [signature, setSignature] = useState(null);      // { name, title, signedAt }
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [btnHovered, setBtnHovered] = useState(false);
   const [submitHovered, setSubmitHovered] = useState(false);
 
-  function handleConfirm() {
+  const canSign = signName.trim().length > 0 && agreed;
+
+  function closeModal() {
     setConfirming(false);
+    setSignStep('summary');
+  }
+
+  function handleConfirm() {
+    const signedAt = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    setSignature({ name: signName.trim(), title: signTitle.trim(), signedAt });
+    closeModal();
     if (onRenew) onRenew();
   }
 
@@ -165,7 +180,7 @@ export default function Shell({ activeTab, onTabChange, onModeChange, onRenew, r
                       <div
                         className="fixed inset-0"
                         style={{ zIndex: 90 }}
-                        onClick={() => setConfirming(false)}
+                        onClick={closeModal}
                       />
                       <div
                         className="rounded-xl p-4"
@@ -173,86 +188,181 @@ export default function Shell({ activeTab, onTabChange, onModeChange, onRenew, r
                           position: 'absolute',
                           right: 0,
                           top: 'calc(100% + 10px)',
-                          width: 320,
+                          width: 344,
                           zIndex: 100,
                           background: 'var(--success-100)',
                           border: '1px solid var(--success-600)',
                           boxShadow: 'var(--shadow-lg, 0 8px 24px rgba(0,0,0,0.12))',
                         }}
                       >
-                        <p
-                          className="text-[16px] font-semibold mb-3"
-                          style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-700)' }}
-                        >
-                          Review &amp; confirm
-                        </p>
+                        {signStep === 'summary' ? (
+                          <>
+                            <p
+                              className="text-[16px] font-semibold mb-3"
+                              style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-700)' }}
+                            >
+                              Review &amp; confirm
+                            </p>
 
-                        <div
-                          className="rounded-lg overflow-hidden mb-3"
-                          style={{ border: '1px solid var(--success-600)', background: 'rgba(255,255,255,0.55)' }}
-                        >
-                          {(() => {
-                            const opt = orderForm.renewalOptions[selectedOption ?? 0];
-                            const rows = [
-                              { label: 'Vendor', value: renewal.vendor },
-                              { label: 'Quote',  value: orderForm.quoteNumber },
-                              { label: 'Option', value: `${opt.label} · ${opt.price}` },
-                              ...orderForm.lineItems.map((item) => ({ label: item.product, value: item.finalPrice })),
-                            ];
-                            return rows.map((row, i) => (
+                            <div
+                              className="rounded-lg overflow-hidden mb-3"
+                              style={{ border: '1px solid var(--success-600)', background: 'rgba(255,255,255,0.55)' }}
+                            >
+                              {(() => {
+                                const order = selectedOrder(selectedOption ?? 0);
+                                const rows = [
+                                  { label: 'Vendor', value: renewal.vendor },
+                                  { label: 'Quote',  value: orderForm.quoteNumber },
+                                  { label: 'Option', value: `${order.label} · ${order.price}` },
+                                  ...order.lineItems.map((item) => ({ label: item.product, value: item.finalPrice })),
+                                ];
+                                return rows.map((row, i) => (
+                                  <div
+                                    key={row.label}
+                                    className="flex items-center justify-between px-3 py-1.5"
+                                    style={i < rows.length - 1 ? { borderBottom: '1px solid rgba(0,0,0,0.07)' } : undefined}
+                                  >
+                                    <span className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+                                      {row.label}
+                                    </span>
+                                    <span className="text-[11px] font-semibold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)', maxWidth: 180, textAlign: 'right' }}>
+                                      {row.value}
+                                    </span>
+                                  </div>
+                                ));
+                              })()}
                               <div
-                                key={row.label}
-                                className="flex items-center justify-between px-3 py-1.5"
-                                style={i < rows.length - 1 ? { borderBottom: '1px solid rgba(0,0,0,0.07)' } : undefined}
+                                className="flex items-center justify-between px-3 py-2"
+                                style={{ borderTop: '1px solid var(--success-600)', background: 'rgba(255,255,255,0.4)' }}
                               >
-                                <span className="text-[11px]" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
-                                  {row.label}
+                                <span className="text-[11px] font-bold uppercase tracking-wide" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)' }}>
+                                  Total
                                 </span>
-                                <span className="text-[11px] font-semibold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)', maxWidth: 180, textAlign: 'right' }}>
-                                  {row.value}
+                                <span className="text-[13px] font-bold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)' }}>
+                                  {formatCurrency(selectedOrder(selectedOption ?? 0).priceValue)}/yr
                                 </span>
                               </div>
-                            ));
-                          })()}
-                          <div
-                            className="flex items-center justify-between px-3 py-2"
-                            style={{ borderTop: '1px solid var(--success-600)', background: 'rgba(255,255,255,0.4)' }}
-                          >
-                            <span className="text-[11px] font-bold uppercase tracking-wide" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)' }}>
-                              Total
-                            </span>
-                            <span className="text-[13px] font-bold" style={{ fontFamily: 'var(--font-mono)', color: 'var(--ink-700)' }}>
-                              {orderForm.total}
-                            </span>
-                          </div>
-                        </div>
+                            </div>
 
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => setConfirming(false)}
-                            className="flex-1 rounded-lg py-2 text-[13px] font-medium"
-                            style={{ border: '1px solid var(--border-default)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
-                            onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
-                            onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            onClick={handleConfirm}
-                            onMouseEnter={() => setSubmitHovered(true)}
-                            onMouseLeave={() => setSubmitHovered(false)}
-                            className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-semibold"
-                            style={{
-                              background: submitHovered ? '#15803D' : 'var(--success-600)',
-                              color: '#fff',
-                              border: 'none',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            <CheckCircle className="w-3.5 h-3.5" />
-                            Submit Renewal
-                          </button>
-                        </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={closeModal}
+                                className="flex-1 rounded-lg py-2 text-[13px] font-medium"
+                                style={{ border: '1px solid var(--border-default)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+                                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={() => setSignStep('sign')}
+                                onMouseEnter={() => setSubmitHovered(true)}
+                                onMouseLeave={() => setSubmitHovered(false)}
+                                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-semibold"
+                                style={{
+                                  background: submitHovered ? '#15803D' : 'var(--success-600)',
+                                  color: '#fff',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <PenLine className="w-3.5 h-3.5" />
+                                Review &amp; Sign
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <p
+                              className="text-[16px] font-semibold mb-1"
+                              style={{ fontFamily: 'var(--font-serif)', color: 'var(--ink-700)' }}
+                            >
+                              Sign &amp; commit
+                            </p>
+                            <p className="text-[11.5px] mb-3" style={{ color: 'var(--text-muted)' }}>
+                              Adopt your signature to accept order form {orderForm.quoteNumber}.
+                            </p>
+
+                            <div className="flex flex-col gap-2 mb-3">
+                              <input
+                                type="text"
+                                value={signName}
+                                onChange={(e) => setSignName(e.target.value)}
+                                placeholder="Full legal name"
+                                className="rounded-lg px-3 py-2 text-[13px]"
+                                style={{ border: '1px solid var(--border-default)', background: 'rgba(255,255,255,0.7)', color: 'var(--ink-700)', outline: 'none' }}
+                              />
+                              <input
+                                type="text"
+                                value={signTitle}
+                                onChange={(e) => setSignTitle(e.target.value)}
+                                placeholder="Title (e.g. VP Operations)"
+                                className="rounded-lg px-3 py-2 text-[13px]"
+                                style={{ border: '1px solid var(--border-default)', background: 'rgba(255,255,255,0.7)', color: 'var(--ink-700)', outline: 'none' }}
+                              />
+                            </div>
+
+                            {/* Adopted-signature preview (italic serif on a ruled line) */}
+                            <div
+                              className="rounded-lg px-3 pt-3 pb-2 mb-3"
+                              style={{ background: 'rgba(255,255,255,0.7)', border: '1px solid var(--success-600)' }}
+                            >
+                              <div className="pb-1 mb-1" style={{ borderBottom: '1px solid var(--ink-700)' }}>
+                                <span
+                                  className="text-[26px] leading-none"
+                                  style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', color: signName.trim() ? 'var(--ink-700)' : 'var(--text-subtle)' }}
+                                >
+                                  {signName.trim() || 'Your signature'}
+                                </span>
+                              </div>
+                              <span className="text-[9.5px] uppercase tracking-widest" style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-subtle)' }}>
+                                Signature{signTitle.trim() ? ` · ${signTitle.trim()}` : ''}
+                              </span>
+                            </div>
+
+                            <label className="flex items-start gap-2 mb-3 cursor-pointer">
+                              <input
+                                type="checkbox"
+                                checked={agreed}
+                                onChange={(e) => setAgreed(e.target.checked)}
+                                className="mt-0.5 flex-shrink-0"
+                                style={{ accentColor: 'var(--success-600)' }}
+                              />
+                              <span className="text-[11px] leading-snug" style={{ color: 'var(--text-muted)' }}>
+                                I have authority to bind {renewal.buyerCompany} and agree to the terms of this order form.
+                              </span>
+                            </label>
+
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => setSignStep('summary')}
+                                className="flex items-center justify-center gap-1 rounded-lg py-2 px-3 text-[13px] font-medium"
+                                style={{ border: '1px solid var(--border-default)', background: 'transparent', color: 'var(--text-muted)', cursor: 'pointer' }}
+                                onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(0,0,0,0.04)')}
+                                onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                              >
+                                <ChevronLeft className="w-3.5 h-3.5" />
+                                Back
+                              </button>
+                              <button
+                                onClick={canSign ? handleConfirm : undefined}
+                                disabled={!canSign}
+                                onMouseEnter={() => setSubmitHovered(true)}
+                                onMouseLeave={() => setSubmitHovered(false)}
+                                className="flex-1 flex items-center justify-center gap-1.5 rounded-lg py-2 text-[13px] font-semibold"
+                                style={{
+                                  background: !canSign ? 'var(--surface-sunken)' : submitHovered ? '#15803D' : 'var(--success-600)',
+                                  color: !canSign ? 'var(--text-subtle)' : '#fff',
+                                  border: 'none',
+                                  cursor: canSign ? 'pointer' : 'not-allowed',
+                                }}
+                              >
+                                <CheckCircle className="w-3.5 h-3.5" />
+                                Sign &amp; Submit
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </>
                   )}
@@ -309,7 +419,11 @@ export default function Shell({ activeTab, onTabChange, onModeChange, onRenew, r
               className="text-[14px]"
               style={{ fontFamily: 'var(--font-serif)', color: 'var(--success-600)' }}
             >
-              Renewal submitted — your <strong>{renewal.vendor}</strong> agreement is on its way to DocuSign.
+              {signature ? (
+                <>Signed by <strong>{signature.name}</strong>{signature.title ? `, ${signature.title}` : ''} · {signature.signedAt} — countersignature requested from <strong>{renewal.vendor}</strong>.</>
+              ) : (
+                <>Renewal submitted — your <strong>{renewal.vendor}</strong> agreement is on its way to DocuSign.</>
+              )}
             </p>
           </div>
           <button
