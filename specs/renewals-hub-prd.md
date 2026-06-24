@@ -52,8 +52,8 @@ There are two users of one product: the buyer (who gets a frictionless evaluatio
 
 A single React + Vite SPA with two modes toggled in the header:
 
-- **Buyer mode** — a 4-tab read-only portal (Home, Documents, ROI Calculator, Renewals Deck) presenting one renewal. The Home tab is a 3-column layout: contract context (left), the proposed order form (center), and a renewal-assistant chatbot + contact panels (right).
-- **Admin mode** — a master-detail seller dashboard: a pipeline list of accounts with inline engagement signals (left), and a per-account detail pane (right) leading with **stakeholder visibility** and engagement telemetry.
+- **Buyer mode** — a 5-tab read-only portal (Home, Chatbot, Contract History, ROI Calculator, Vendor Contacts) presenting one renewal. The Home tab leads with a renewal banner (vendor, status badge, days-to-renewal, annual spend, AE/CSM), a metrics row (annual spend, seats purchased, seats active, cost per seat), an action-items checklist, and a key-dates timeline. The 3-column layout with proposed order form, embedded chatbot, and contact panel is the design target; the scaffolded Home tab approximates it with the elements described in Detailed Design below.
+- **Admin mode** — a master-detail seller dashboard: a pipeline list of accounts with inline engagement signals (left), and a per-account detail pane (right) leading with **stakeholder visibility** and engagement telemetry. *(Not yet scaffolded — see design below.)*
 
 The hub is **Stage 4** of the pipeline. Upstream agents feed it:
 
@@ -73,24 +73,34 @@ Qualification (Aaron) ──► Outreach (Parth) ──► Proposal (Dean) ─�
 
 ### Buyer portal
 
-**Home tab (3 columns):**
-- **Countdown box** — large "N days until renewal," with an elapsed-time progress bar based on actual contract dates. Never goes negative.
-- **Contract stat cards + "Your products"** — current contract facts and a per-product Included/Add-on list (no usage numbers unless the seller enables them).
-- **Highlights toggle** — an optional overlay (seller-enabled) that calls out the notable changes in this renewal (e.g. a newly added auto-renewal clause), distinct from the full line-item redline diff.
-- **Proposed Order Form (center)** — quote number, addresses, line items, per-unit pricing, and a **Redlines toggle** that shows a color-coded YoY diff (added / changed / removed) covering term, uplift, auto-renewal, and MSA. A **Pricing Justification** badge + italic quote (authored upstream by the Proposal agent) sits below the table. A renewal-option selector lets the buyer compare paths.
-- **Renewal assistant (right)** — context-aware chatbot keyed to the renewal (canned replies in demo).
-- **Contacts (right)** — Buyer Renewal Team and Seller Account Team, with a Calendly-style **Schedule-a-call** modal.
-- **Deck teaser (right, conditional)** — compact preview of the Renewals Deck when a proposal exists.
+**Home tab (scaffolded):**
+- **Renewal banner** — vendor name and product, status badge (On Track / Review Needed / At Risk), days-to-renewal counter, annual spend, and a footer row showing AE, CSM, and renewal date.
+- **Metrics row** — four stat cards: Annual Spend (with YoY delta %), Seats Purchased, Seats Active (utilization %), and Cost / Seat.
+- **Action items** — checklist of renewal tasks, each with owner, due date, and completion status; a progress bar shows tasks done vs. total.
+- **Key dates** — chronological timeline of milestones (kickoff call, pricing negotiation, budget lock, legal review, renewal deadline) color-coded by severity (critical / warning / info).
 
-**Documents tab** — grouped document library (Legal & Compliance, Contract History, Product Briefs, Implementation & Support). Contract history (prior contracts with PDFs) is one group. Docs carry a format badge (PDF/DOCX/Link) and tags (Updated / New / Required to sign). Links open externally; files show a transient "Saved" state.
+**Planned for Home tab (not yet built):**
+- **Countdown box with elapsed-progress bar** — elapsed-time bar based on actual contract dates; never goes negative.
+- **Contract stat cards + "Your products"** — per-product Included/Add-on list; no usage numbers unless the seller enables them.
+- **Highlights toggle** — seller-enabled overlay calling out the notable changes in this renewal (e.g. a newly added auto-renewal clause), distinct from the full line-item redline diff.
+- **Proposed Order Form (center column)** — quote number, addresses, line items, per-unit pricing, and a **Redlines toggle** showing a color-coded YoY diff (added / changed / removed) covering term, uplift, auto-renewal, and MSA. A **Pricing Justification** badge + italic quote (authored by the Proposal agent) sits below the table. A renewal-option selector lets the buyer compare paths.
+- **Renewal assistant (right column)** — context-aware chatbot embedded in Home (currently implemented as the standalone Chatbot tab).
+- **Contacts (right column)** — Buyer Renewal Team and Seller Account Team with a Calendly-style **Schedule-a-call** modal (currently implemented as the standalone Vendor Contacts tab, which shows seller contacts only; no buyer-team contacts or schedule modal yet).
+- **Deck teaser (right column, conditional)** — compact preview of the Renewals Deck when a proposal exists.
 
-**ROI Calculator tab** — three input sliders (typeable) compute ROI and payback against annual cost. This is the Finance-proof artifact buyers otherwise build themselves.
+**Chatbot tab (scaffolded)** — full-screen renewal assistant with suggested prompts (renewal date, seat utilization, open action items, year-over-year spend). Canned bot replies are keyed to the fake renewal data. This is the scaffolded form of the right-column **Renewal assistant** panel planned for Home; the two will merge once the Home layout is built.
 
-**Renewals Deck tab** — the Proposal agent's tailored deck (cover → pricing → next steps), expandable slide-by-slide with keyboard nav. Shown only when a proposal has been prepared.
+**Contract History tab (scaffolded)** — tabular list of prior contracts with columns for term, annual value, seats, status (Active / Expired / In Negotiation), signed date, and notes. The full **Documents** design — a grouped library covering Legal & Compliance, Product Briefs, and Implementation & Support in addition to contract history, with PDF/DOCX/Link format badges and Updated / New / Required-to-sign tags — is not yet scaffolded.
 
-**Quick Renew** — header CTA with a confirmation modal for frictionless flat renewal (visual-only in demo).
+**ROI Calculator tab (scaffolded)** — three input sliders (typeable): hours saved per user per month, average fully-loaded hourly rate, and active user count. Sliders live-update ROI %, payback period, productivity value, and a benefit-breakdown table. This is the Finance-proof artifact buyers otherwise build themselves.
 
-**Planned, not yet built:** a "What's new since you bought this" module — features shipped *during the contract term* that the buyer actively uses, as internal justification ammunition (Courtney's headline ask). Today the closest built surfaces are the "Your products" Included/Add-on list and ROI Calculator; neither yet ties shipped features to the buyer's usage. This is the highest-value next addition to the buyer portal.
+**Vendor Contacts tab (scaffolded)** — grid of vendor account-team contacts (Account Executive, Customer Success Manager, Solutions Engineer, Support Lead, Renewals Manager, Implementation Specialist), each showing name, role, team badge, email, and phone. This is the scaffolded form of the right-column **Contacts** panel planned for Home; it currently shows seller contacts only — no buyer-team contacts and no Schedule-a-call modal yet.
+
+**Renewals Deck tab** *(not yet scaffolded)* — the Proposal agent's tailored deck (cover → pricing → next steps), expandable slide-by-slide with keyboard nav. Shown only when a proposal has been prepared.
+
+**Quick Renew** *(not yet scaffolded)* — header CTA with a confirmation modal for frictionless flat renewal (visual-only in demo).
+
+**Planned, not yet built:** a "What's new since you bought this" module — features shipped *during the contract term* that the buyer actively uses, as internal justification ammunition (Courtney's headline ask). Today the closest built surface is the ROI Calculator; it does not yet tie shipped features to the buyer's usage. The "Your products" Included/Add-on list is also planned but not yet built. This is the highest-value next addition to the buyer portal.
 
 ### Admin dashboard (seller)
 
@@ -142,7 +152,7 @@ The dashboard is **strict master-detail**, per Evan's 1:1 (Jun 19): *"first I'm 
 
 ## Rollout / Testing
 
-- **Now (demo):** All data is fake (`src/data/`), all actions visual-only. Demo narrative: open on admin pipeline → Uber reads dark, Airbnb engaged → click Airbnb → Stakeholders card first → "Legal just got pulled in two days ago." Each agent dashboard demos as a separately sellable module; dashboards consolidate per customer.
+- **Now (demo):** All data is fake (`src/data/`), all actions visual-only. Scaffolded buyer portal has 5 tabs — Home (renewal banner, metrics row, action items, key dates for a fake Acme SaaS Co. renewal), Chatbot (canned Q&A), Contract History (table of prior contracts), ROI Calculator (live sliders), and Vendor Contacts (seller account team). Admin dashboard is not yet scaffolded. Demo narrative for the buyer portal: open Home → review metrics and upcoming key dates → jump to Chatbot and ask about seat utilization → use ROI Calculator to build Finance proof → check Vendor Contacts for the AE. Each agent dashboard will demo as a separately sellable module once built; dashboards consolidate per customer.
 - **Phase 1 — real read data:** Replace `src/data/*` exports with API calls (contract history, order form, ROI inputs, engagement telemetry). No UI change required.
 - **Phase 2 — agent integration:** Wire `qualificationOutput.js` to Aaron's qualification agent; pipe Proposal-agent pricing justification + deck.
 - **Phase 3 — write actions:** Back Quick Renew, scheduling, and document downloads with real services; add auth.
