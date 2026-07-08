@@ -50,10 +50,10 @@ There are two users of one product: the buyer (who gets a frictionless evaluatio
 
 ## Proposed Approach
 
-A single React + Vite SPA with two modes toggled in the header:
+A single React + Vite SPA. The buyer portal is currently implemented as a 5-tab shell; Admin mode is designed but not yet built:
 
-- **Buyer mode** — a 4-tab read-only portal (Home, Documents, ROI Calculator, Renewals Deck) presenting one renewal. The Home tab is a 3-column layout: contract context (left), the proposed order form (center), and a renewal-assistant chatbot + contact panels (right).
-- **Admin mode** — a master-detail seller dashboard: a pipeline list of accounts with inline engagement signals (left), and a per-account detail pane (right) leading with **stakeholder visibility** and engagement telemetry.
+- **Buyer mode** — a 5-tab read-only portal (Home, Chatbot, Contract History, ROI Calculator, Vendor Contacts) presenting one renewal. The Home tab has a stacked layout: a renewal banner (vendor name, status badge, countdown, annual spend, AE/CSM), four contract stat tiles (Annual Spend, Seats Purchased, Seats Active, Cost/Seat), an Action Items checklist with progress bar, and a Key Dates timeline.
+- **Admin mode** *(designed, not yet built)* — a master-detail seller dashboard: a pipeline list of accounts with inline engagement signals (left), and a per-account detail pane (right) leading with **stakeholder visibility** and engagement telemetry.
 
 The hub is **Stage 4** of the pipeline. Upstream agents feed it:
 
@@ -67,32 +67,33 @@ Qualification (Aaron) ──► Outreach (Parth) ──► Proposal (Dean) ─�
 - The **Proposal agent** writes the pricing justification injected into the order form ("this sentence was written by the proposal agent").
 - The **Qualification agent** writes a per-account signal (account type, urgency, tone, red flags, champion, recommended action) that **pre-configures which buyer portal sections are shown** (it no longer renders as an admin card — per Evan, "those agents have already told me"; the signal works in the background).
 
-**Data boundary:** all content is fake data in `src/data/`. Going to production = replacing those exports with API calls; the UI is unchanged. The single integration contract for the Qualification agent is `src/data/qualificationOutput.js`.
+**Data boundary:** all content is fake data in `src/data/`. Going to production = replacing those exports with API calls; the UI is unchanged. The single integration contract for the Qualification agent will be `src/data/qualificationOutput.js` *(file does not exist yet — it is the planned addition point for agent integration)*.
 
 ## Detailed Design — Feature Set
 
 ### Buyer portal
 
-**Home tab (3 columns):**
-- **Countdown box** — large "N days until renewal," with an elapsed-time progress bar based on actual contract dates. Never goes negative.
-- **Contract stat cards + "Your products"** — current contract facts and a per-product Included/Add-on list (no usage numbers unless the seller enables them).
-- **Highlights toggle** — an optional overlay (seller-enabled) that calls out the notable changes in this renewal (e.g. a newly added auto-renewal clause), distinct from the full line-item redline diff.
-- **Proposed Order Form (center)** — quote number, addresses, line items, per-unit pricing, and a **Redlines toggle** that shows a color-coded YoY diff (added / changed / removed) covering term, uplift, auto-renewal, and MSA. A **Pricing Justification** badge + italic quote (authored upstream by the Proposal agent) sits below the table. A renewal-option selector lets the buyer compare paths.
-- **Renewal assistant (right)** — context-aware chatbot keyed to the renewal (canned replies in demo).
-- **Contacts (right)** — Buyer Renewal Team and Seller Account Team, with a Calendly-style **Schedule-a-call** modal.
-- **Deck teaser (right, conditional)** — compact preview of the Renewals Deck when a proposal exists.
+**Home tab:**
+- **Renewal banner** — vendor name, status badge (On Track / Review Needed / At Risk), "Renews in N days" countdown, annual spend, and AE/CSM names drawn from `renewalData.js`.
+- **Contract stat tiles** — four metric cards: Annual Spend (with YoY delta and trend indicator), Seats Purchased, Seats Active (utilization %), and Cost/Seat.
+- **Action Items** — checklist of renewal tasks showing owner, due date, and an aggregate completion progress bar.
+- **Key Dates** — chronological timeline of upcoming renewal milestones (kickoff, pricing negotiation, budget lock, legal review, renewal deadline) with severity coloring (critical / warning / info).
 
-**Documents tab** — grouped document library (Legal & Compliance, Contract History, Product Briefs, Implementation & Support). Contract history (prior contracts with PDFs) is one group. Docs carry a format badge (PDF/DOCX/Link) and tags (Updated / New / Required to sign). Links open externally; files show a transient "Saved" state.
+**Chatbot tab** — full-page context-aware chatbot keyed to the renewal, with canned keyword responses (renewal date, seat utilization, action items, YoY spend) and suggested prompt chips. *(In the target Home layout, this panel moves to the Home right column.)*
+
+**Contract History tab** — table of prior contracts: term, annual value, seats, status (Active / Expired / In Negotiation), signed date, and notes, sourced from `src/data/contractHistory.js`. *(The broader planned Documents tab — adding groups for Legal & Compliance, Product Briefs, Implementation & Support with format badges and tags — is not yet built.)*
 
 **ROI Calculator tab** — three input sliders (typeable) compute ROI and payback against annual cost. This is the Finance-proof artifact buyers otherwise build themselves.
 
-**Renewals Deck tab** — the Proposal agent's tailored deck (cover → pricing → next steps), expandable slide-by-slide with keyboard nav. Shown only when a proposal has been prepared.
+**Vendor Contacts tab** — grid of vendor account team contacts (Sales, Customer Success, Pre-Sales, Support, Professional Services) with email and phone, sourced from `src/data/vendorContacts.js`. *(In the target Home layout, a contacts panel with a Calendly-style Schedule-a-call modal moves to the Home right column.)*
 
-**Quick Renew** — header CTA with a confirmation modal for frictionless flat renewal (visual-only in demo).
+**Renewals Deck tab** *(planned, not yet built)* — the Proposal agent's tailored deck (cover → pricing → next steps), expandable slide-by-slide with keyboard nav. Shown only when a proposal has been prepared.
 
-**Planned, not yet built:** a "What's new since you bought this" module — features shipped *during the contract term* that the buyer actively uses, as internal justification ammunition (Courtney's headline ask). Today the closest built surfaces are the "Your products" Included/Add-on list and ROI Calculator; neither yet ties shipped features to the buyer's usage. This is the highest-value next addition to the buyer portal.
+**Quick Renew** *(planned, not yet built)* — header CTA with a confirmation modal for frictionless flat renewal.
 
-### Admin dashboard (seller)
+**Planned, not yet built:** a "What's new since you bought this" module — features shipped *during the contract term* that the buyer actively uses, as internal justification ammunition (Courtney's headline ask). The ROI Calculator is the closest built surface; "Your products" Included/Add-on list and feature-to-usage mapping do not yet exist. This is the highest-value next addition to the buyer portal. Also planned but not yet built: the full 3-column Home layout (contract context left / Proposed Order Form center / chatbot+contacts right) including the Proposed Order Form with Redlines toggle, Pricing Justification badge, Highlights toggle, and Deck teaser panel.
+
+### Admin dashboard (seller) *(designed, not yet built — no code exists in the current scaffold)*
 
 The dashboard is **strict master-detail**, per Evan's 1:1 (Jun 19): *"first I'm seeing a summary of accounts and once I click into an account, I'm only seeing the account."* The summary and the account never coexist on screen — the original failure of the bucketed Portfolio Snapshot was that it stayed pinned above the account detail and read as a whole-product dashboard.
 
@@ -142,7 +143,7 @@ The dashboard is **strict master-detail**, per Evan's 1:1 (Jun 19): *"first I'm 
 
 ## Rollout / Testing
 
-- **Now (demo):** All data is fake (`src/data/`), all actions visual-only. Demo narrative: open on admin pipeline → Uber reads dark, Airbnb engaged → click Airbnb → Stakeholders card first → "Legal just got pulled in two days ago." Each agent dashboard demos as a separately sellable module; dashboards consolidate per customer.
+- **Now (demo):** All data is fake (`src/data/`), all actions visual-only. The current build is buyer portal only (Admin mode not yet built). Buyer demo narrative: open on Home tab → review renewal banner, metrics, action items, and key dates → explore Chatbot for canned Q&A → check Contract History and Vendor Contacts → build ROI case in the calculator. Each agent dashboard demos as a separately sellable module; dashboards consolidate per customer.
 - **Phase 1 — real read data:** Replace `src/data/*` exports with API calls (contract history, order form, ROI inputs, engagement telemetry). No UI change required.
 - **Phase 2 — agent integration:** Wire `qualificationOutput.js` to Aaron's qualification agent; pipe Proposal-agent pricing justification + deck.
 - **Phase 3 — write actions:** Back Quick Renew, scheduling, and document downloads with real services; add auth.
