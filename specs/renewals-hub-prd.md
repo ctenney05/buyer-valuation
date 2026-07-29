@@ -52,7 +52,7 @@ There are two users of one product: the buyer (who gets a frictionless evaluatio
 
 A single React + Vite SPA with two modes toggled in the header:
 
-- **Buyer mode** — a 4-tab read-only portal (Home, Documents, ROI Calculator, Renewals Deck) presenting one renewal. The Home tab is a 3-column layout: contract context (left), the proposed order form (center), and a renewal-assistant chatbot + contact panels (right).
+- **Buyer mode** — currently scaffolded as a 5-tab portal (Home, Chatbot, Contract History, ROI Calculator, Vendor Contacts) presenting one renewal. In the current build, the Chatbot and Vendor Contacts are standalone tabs rather than right-column panels within Home, and the Renewals Deck tab is not yet implemented. Design intent: collapse to a 4-tab layout (Home, Contract History, ROI Calculator, Renewals Deck) with chatbot + contacts embedded in Home's right column.
 - **Admin mode** — a master-detail seller dashboard: a pipeline list of accounts with inline engagement signals (left), and a per-account detail pane (right) leading with **stakeholder visibility** and engagement telemetry.
 
 The hub is **Stage 4** of the pipeline. Upstream agents feed it:
@@ -67,7 +67,7 @@ Qualification (Aaron) ──► Outreach (Parth) ──► Proposal (Dean) ─�
 - The **Proposal agent** writes the pricing justification injected into the order form ("this sentence was written by the proposal agent").
 - The **Qualification agent** writes a per-account signal (account type, urgency, tone, red flags, champion, recommended action) that **pre-configures which buyer portal sections are shown** (it no longer renders as an admin card — per Evan, "those agents have already told me"; the signal works in the background).
 
-**Data boundary:** all content is fake data in `src/data/`. Going to production = replacing those exports with API calls; the UI is unchanged. The single integration contract for the Qualification agent is `src/data/qualificationOutput.js`.
+**Data boundary:** all content is fake data in `src/data/`. Going to production = replacing those exports with API calls; the UI is unchanged. The planned integration contract for the Qualification agent is `src/data/qualificationOutput.js` (not yet created; current data files are `renewalData.js`, `contractHistory.js`, `roiData.js`, and `vendorContacts.js`).
 
 ## Detailed Design — Feature Set
 
@@ -82,7 +82,7 @@ Qualification (Aaron) ──► Outreach (Parth) ──► Proposal (Dean) ─�
 - **Contacts (right)** — Buyer Renewal Team and Seller Account Team, with a Calendly-style **Schedule-a-call** modal.
 - **Deck teaser (right, conditional)** — compact preview of the Renewals Deck when a proposal exists.
 
-**Documents tab** — grouped document library (Legal & Compliance, Contract History, Product Briefs, Implementation & Support). Contract history (prior contracts with PDFs) is one group. Docs carry a format badge (PDF/DOCX/Link) and tags (Updated / New / Required to sign). Links open externally; files show a transient "Saved" state.
+**Contract History tab** — in the current scaffold, a table of prior contracts (term, annual value, seats, status, signed date, notes). Planned full scope: a grouped document library (Legal & Compliance, Contract History, Product Briefs, Implementation & Support) with format badges (PDF/DOCX/Link) and tags (Updated / New / Required to sign); links open externally, files show a transient "Saved" state.
 
 **ROI Calculator tab** — three input sliders (typeable) compute ROI and payback against annual cost. This is the Finance-proof artifact buyers otherwise build themselves.
 
