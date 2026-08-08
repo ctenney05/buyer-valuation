@@ -52,8 +52,8 @@ There are two users of one product: the buyer (who gets a frictionless evaluatio
 
 A single React + Vite SPA with two modes toggled in the header:
 
-- **Buyer mode** — a 4-tab read-only portal (Home, Documents, ROI Calculator, Renewals Deck) presenting one renewal. The Home tab is a 3-column layout: contract context (left), the proposed order form (center), and a renewal-assistant chatbot + contact panels (right).
-- **Admin mode** — a master-detail seller dashboard: a pipeline list of accounts with inline engagement signals (left), and a per-account detail pane (right) leading with **stakeholder visibility** and engagement telemetry.
+- **Buyer mode** — currently a 5-tab portal (Home, Chatbot, Contract History, ROI Calculator, Vendor Contacts) presenting one renewal. The current Home tab shows a Renewal Banner (countdown + annual spend + AE/CSM info), a Metrics row (annual spend, seats purchased/active, cost per seat), an Action Items checklist, and a Key Dates timeline. The Chatbot and Vendor Contacts live as standalone tabs pending consolidation into the Home right column per the 3-column target design below; Contract History is the current implementation of the planned Documents tab; the Renewals Deck tab is not yet built.
+- **Admin mode** — a master-detail seller dashboard: a pipeline list of accounts with inline engagement signals (left), and a per-account detail pane (right) leading with **stakeholder visibility** and engagement telemetry. *(Not yet implemented — `src/components/Admin/` does not exist in the current build.)*
 
 The hub is **Stage 4** of the pipeline. Upstream agents feed it:
 
@@ -67,13 +67,15 @@ Qualification (Aaron) ──► Outreach (Parth) ──► Proposal (Dean) ─�
 - The **Proposal agent** writes the pricing justification injected into the order form ("this sentence was written by the proposal agent").
 - The **Qualification agent** writes a per-account signal (account type, urgency, tone, red flags, champion, recommended action) that **pre-configures which buyer portal sections are shown** (it no longer renders as an admin card — per Evan, "those agents have already told me"; the signal works in the background).
 
-**Data boundary:** all content is fake data in `src/data/`. Going to production = replacing those exports with API calls; the UI is unchanged. The single integration contract for the Qualification agent is `src/data/qualificationOutput.js`.
+**Data boundary:** all content is fake data in `src/data/`. Going to production = replacing those exports with API calls; the UI is unchanged. Current data files: `renewalData.js`, `contractHistory.js`, `roiData.js`, `vendorContacts.js`. The planned integration contract for the Qualification agent (`src/data/qualificationOutput.js`) is not yet present in the repo.
 
 ## Detailed Design — Feature Set
 
 ### Buyer portal
 
-**Home tab (3 columns):**
+**Home tab — current build:** Renewal Banner (days-to-renewal + annual spend + AE/CSM info), Metrics row (4 stat cards: Annual Spend, Seats Purchased, Seats Active, Cost/Seat), Action Items checklist with progress bar, Key Dates timeline. The chatbot and vendor contacts are standalone tabs in the current build; the order form, Highlights toggle, and Deck teaser below are the target design not yet built.
+
+**Home tab — target design (3 columns):**
 - **Countdown box** — large "N days until renewal," with an elapsed-time progress bar based on actual contract dates. Never goes negative.
 - **Contract stat cards + "Your products"** — current contract facts and a per-product Included/Add-on list (no usage numbers unless the seller enables them).
 - **Highlights toggle** — an optional overlay (seller-enabled) that calls out the notable changes in this renewal (e.g. a newly added auto-renewal clause), distinct from the full line-item redline diff.
@@ -142,7 +144,7 @@ The dashboard is **strict master-detail**, per Evan's 1:1 (Jun 19): *"first I'm 
 
 ## Rollout / Testing
 
-- **Now (demo):** All data is fake (`src/data/`), all actions visual-only. Demo narrative: open on admin pipeline → Uber reads dark, Airbnb engaged → click Airbnb → Stakeholders card first → "Legal just got pulled in two days ago." Each agent dashboard demos as a separately sellable module; dashboards consolidate per customer.
+- **Now (demo):** All data is fake (`src/data/`), all actions visual-only. The buyer portal (5 tabs: Home, Chatbot, Contract History, ROI Calculator, Vendor Contacts) is navigable with Acme SaaS Co. sample data. The admin pipeline, deal rows, stakeholder card, and engagement telemetry are designed (see Admin dashboard section) but not yet implemented. Target demo narrative when admin is built: open on admin pipeline → Uber reads dark, Airbnb engaged → click Airbnb → Stakeholders card first → "Legal just got pulled in two days ago." Each agent dashboard demos as a separately sellable module; dashboards consolidate per customer.
 - **Phase 1 — real read data:** Replace `src/data/*` exports with API calls (contract history, order form, ROI inputs, engagement telemetry). No UI change required.
 - **Phase 2 — agent integration:** Wire `qualificationOutput.js` to Aaron's qualification agent; pipe Proposal-agent pricing justification + deck.
 - **Phase 3 — write actions:** Back Quick Renew, scheduling, and document downloads with real services; add auth.
