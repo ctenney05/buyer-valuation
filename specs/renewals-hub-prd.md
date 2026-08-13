@@ -50,10 +50,10 @@ There are two users of one product: the buyer (who gets a frictionless evaluatio
 
 ## Proposed Approach
 
-A single React + Vite SPA with two modes toggled in the header:
+A single React + Vite SPA. The current scaffold covers the buyer portal only; the admin dashboard and the mode toggle are not yet built.
 
-- **Buyer mode** — a 4-tab read-only portal (Home, Documents, ROI Calculator, Renewals Deck) presenting one renewal. The Home tab is a 3-column layout: contract context (left), the proposed order form (center), and a renewal-assistant chatbot + contact panels (right).
-- **Admin mode** — a master-detail seller dashboard: a pipeline list of accounts with inline engagement signals (left), and a per-account detail pane (right) leading with **stakeholder visibility** and engagement telemetry.
+- **Buyer mode** — target design: a 4-tab read-only portal (Home, Documents, ROI Calculator, Renewals Deck) presenting one renewal, with Home as a 3-column layout: contract context (left), the proposed order form (center), and a renewal-assistant chatbot + contact panels (right). Current scaffold: 5 tabs (Home, Chatbot, Contract History, ROI Calculator, Vendor Contacts); Home shows a renewal countdown banner and contract stat tiles; Chatbot and Vendor Contacts are standalone top-level tabs; the Documents and Renewals Deck tabs are not yet built.
+- **Admin mode** — not yet scaffolded. Target design: a master-detail seller dashboard: a pipeline list of accounts with inline engagement signals (left), and a per-account detail pane (right) leading with **stakeholder visibility** and engagement telemetry.
 
 The hub is **Stage 4** of the pipeline. Upstream agents feed it:
 
@@ -90,7 +90,7 @@ Qualification (Aaron) ──► Outreach (Parth) ──► Proposal (Dean) ─�
 
 **Quick Renew** — header CTA with a confirmation modal for frictionless flat renewal (visual-only in demo).
 
-**Planned, not yet built:** a "What's new since you bought this" module — features shipped *during the contract term* that the buyer actively uses, as internal justification ammunition (Courtney's headline ask). Today the closest built surfaces are the "Your products" Included/Add-on list and ROI Calculator; neither yet ties shipped features to the buyer's usage. This is the highest-value next addition to the buyer portal.
+**Planned, not yet built:** the Admin seller dashboard (entire mode: pipeline list, deal detail, stakeholders card, section heatmap, portal configuration); the Renewals Deck tab; the full Documents tab with grouped library (current scaffold has a Contract History tab showing prior contract data in its place); the 3-column Home tab layout including the Proposed Order Form (with Redlines toggle and Pricing Justification), Highlights toggle, inline chatbot panel, contacts panel, and Deck teaser; the Quick Renew header CTA. Additionally: a "What's new since you bought this" module — features shipped *during the contract term* that the buyer actively uses, as internal justification ammunition (Courtney's headline ask). Today the closest built surfaces are the "Your products" Included/Add-on list and ROI Calculator; neither yet ties shipped features to the buyer's usage. This is the highest-value next addition to the buyer portal.
 
 ### Admin dashboard (seller)
 
@@ -142,7 +142,7 @@ The dashboard is **strict master-detail**, per Evan's 1:1 (Jun 19): *"first I'm 
 
 ## Rollout / Testing
 
-- **Now (demo):** All data is fake (`src/data/`), all actions visual-only. Demo narrative: open on admin pipeline → Uber reads dark, Airbnb engaged → click Airbnb → Stakeholders card first → "Legal just got pulled in two days ago." Each agent dashboard demos as a separately sellable module; dashboards consolidate per customer.
+- **Now (demo):** All data is fake (`src/data/`), all actions visual-only. The current scaffold demos the buyer portal only (Home, Chatbot, Contract History, ROI Calculator, Vendor Contacts tabs; single account "Acme SaaS Co." in `src/data/renewalData.js`). The admin-pipeline demo narrative (pipeline → Uber reads dark → click Airbnb → Stakeholders card → "Legal just got pulled in") is the target once the admin dashboard is scaffolded. Each agent dashboard is designed to demo as a separately sellable module; dashboards consolidate per customer.
 - **Phase 1 — real read data:** Replace `src/data/*` exports with API calls (contract history, order form, ROI inputs, engagement telemetry). No UI change required.
 - **Phase 2 — agent integration:** Wire `qualificationOutput.js` to Aaron's qualification agent; pipe Proposal-agent pricing justification + deck.
 - **Phase 3 — write actions:** Back Quick Renew, scheduling, and document downloads with real services; add auth.
