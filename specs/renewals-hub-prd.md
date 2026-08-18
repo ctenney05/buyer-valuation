@@ -52,8 +52,8 @@ There are two users of one product: the buyer (who gets a frictionless evaluatio
 
 A single React + Vite SPA with two modes toggled in the header:
 
-- **Buyer mode** — a 4-tab read-only portal (Home, Documents, ROI Calculator, Renewals Deck) presenting one renewal. The Home tab is a 3-column layout: contract context (left), the proposed order form (center), and a renewal-assistant chatbot + contact panels (right).
-- **Admin mode** — a master-detail seller dashboard: a pipeline list of accounts with inline engagement signals (left), and a per-account detail pane (right) leading with **stakeholder visibility** and engagement telemetry.
+- **Buyer mode** — a 5-tab read-only portal presenting one renewal. Current scaffold tabs: **Home** (renewal overview dashboard), **Chatbot** (full-page renewal assistant), **Contract History** (prior contracts table), **ROI Calculator**, and **Vendor Contacts** (vendor team directory). Designed but not yet built: a **Renewals Deck** tab and a **Documents** tab (grouped document library). In the full design the Chatbot and Contacts panels are embedded in the Home tab's right column, but in the current scaffold they are dedicated full-page tabs.
+- **Admin mode** — a master-detail seller dashboard: a pipeline list of accounts with inline engagement signals (left), and a per-account detail pane (right) leading with **stakeholder visibility** and engagement telemetry. **Not yet implemented in the current scaffold.**
 
 The hub is **Stage 4** of the pipeline. Upstream agents feed it:
 
@@ -73,16 +73,23 @@ Qualification (Aaron) ──► Outreach (Parth) ──► Proposal (Dean) ─�
 
 ### Buyer portal
 
-**Home tab (3 columns):**
+**Home tab — current scaffold (overview dashboard):**
+The scaffold builds the Home tab as a renewal overview dashboard, not the 3-column Order Form layout described below. Current components:
+- **RenewalBanner** — vendor name, product, renewal date, days-until countdown, annual spend, AE / CSM names, and an on-track / review-needed / at-risk status badge.
+- **MetricsRow** — four KPI cards: Annual Spend, Seats Purchased, Seats Active, Cost per Seat — each with a YoY delta and trend indicator.
+- **ActionItems** — buyer-facing checklist of open action items (owner, due date, completion state) with a progress bar.
+- **KeyDates** — color-coded timeline of critical, warning, and informational dates (e.g. Budget Lock, Legal Review, Renewal Deadline).
+
+**Home tab — full design (3 columns, not yet built):**
 - **Countdown box** — large "N days until renewal," with an elapsed-time progress bar based on actual contract dates. Never goes negative.
 - **Contract stat cards + "Your products"** — current contract facts and a per-product Included/Add-on list (no usage numbers unless the seller enables them).
 - **Highlights toggle** — an optional overlay (seller-enabled) that calls out the notable changes in this renewal (e.g. a newly added auto-renewal clause), distinct from the full line-item redline diff.
 - **Proposed Order Form (center)** — quote number, addresses, line items, per-unit pricing, and a **Redlines toggle** that shows a color-coded YoY diff (added / changed / removed) covering term, uplift, auto-renewal, and MSA. A **Pricing Justification** badge + italic quote (authored upstream by the Proposal agent) sits below the table. A renewal-option selector lets the buyer compare paths.
-- **Renewal assistant (right)** — context-aware chatbot keyed to the renewal (canned replies in demo).
-- **Contacts (right)** — Buyer Renewal Team and Seller Account Team, with a Calendly-style **Schedule-a-call** modal.
+- **Renewal assistant (right)** — context-aware chatbot keyed to the renewal (canned replies in demo). In the scaffold this is the standalone **Chatbot** tab (`ChatbotTab.jsx`) with suggested prompts and stub responses.
+- **Contacts (right)** — Buyer Renewal Team and Seller Account Team, with a Calendly-style **Schedule-a-call** modal. In the scaffold this is the standalone **Vendor Contacts** tab (`VendorContactsTab.jsx`) showing a grid of vendor contacts by team (Sales, Customer Success, Pre-Sales, Support, Professional Services); the buyer/seller split and scheduling modal are not yet built.
 - **Deck teaser (right, conditional)** — compact preview of the Renewals Deck when a proposal exists.
 
-**Documents tab** — grouped document library (Legal & Compliance, Contract History, Product Briefs, Implementation & Support). Contract history (prior contracts with PDFs) is one group. Docs carry a format badge (PDF/DOCX/Link) and tags (Updated / New / Required to sign). Links open externally; files show a transient "Saved" state.
+**Contract History tab** (`ContractHistoryTab.jsx`) — in the scaffold, contract history ships as a standalone tab: a table of prior contracts showing term, annual value, seat count, status (Active / Expired / In Negotiation), signed date, and notes. The full design calls for a broader **Documents tab** (grouped document library: Legal & Compliance, Contract History, Product Briefs, Implementation & Support) with format badges (PDF/DOCX/Link) and tags (Updated / New / Required to sign). That broader Documents tab is not yet built; Contract History is its only realized piece.
 
 **ROI Calculator tab** — three input sliders (typeable) compute ROI and payback against annual cost. This is the Finance-proof artifact buyers otherwise build themselves.
 
@@ -90,9 +97,11 @@ Qualification (Aaron) ──► Outreach (Parth) ──► Proposal (Dean) ─�
 
 **Quick Renew** — header CTA with a confirmation modal for frictionless flat renewal (visual-only in demo).
 
-**Planned, not yet built:** a "What's new since you bought this" module — features shipped *during the contract term* that the buyer actively uses, as internal justification ammunition (Courtney's headline ask). Today the closest built surfaces are the "Your products" Included/Add-on list and ROI Calculator; neither yet ties shipped features to the buyer's usage. This is the highest-value next addition to the buyer portal.
+**Planned, not yet built:** a "What's new since you bought this" module — features shipped *during the contract term* that the buyer actively uses, as internal justification ammunition (Courtney's headline ask). Today the closest built surface is the ROI Calculator (which quantifies value but doesn't tie to specific shipped features); the "Your products" Included/Add-on list is also designed but not yet built. This is the highest-value next addition to the buyer portal.
 
 ### Admin dashboard (seller)
+
+**Not yet implemented in the current scaffold** (no `src/components/Admin/` directory exists). The design intent is documented below and remains unchanged.
 
 The dashboard is **strict master-detail**, per Evan's 1:1 (Jun 19): *"first I'm seeing a summary of accounts and once I click into an account, I'm only seeing the account."* The summary and the account never coexist on screen — the original failure of the bucketed Portfolio Snapshot was that it stayed pinned above the account detail and read as a whole-product dashboard.
 
@@ -108,13 +117,19 @@ The dashboard is **strict master-detail**, per Evan's 1:1 (Jun 19): *"first I'm 
 
 ### Data contract (the only file that changes when agents go live)
 
-`qualificationOutput.js` per account:
+`qualificationOutput.js` per account (**designed, not yet created in the scaffold**):
 ```
 { dealId, generatedAt, accountType: 'upsell'|'flat'|'downsell',
   urgency, communicationTone, renewalStory, usageHealth,
   redFlags[], champion, recommendedAction }
 ```
 `accountType` → default buyer-portal flags via `FLAG_DEFAULTS` (e.g. `flat` shows Highlights, hides seat utilization). Seller can override any flag manually.
+
+**Current scaffold data files** (swap for API calls in Phase 1):
+- `src/data/renewalData.js` — renewal header, KPI metrics, action items, key dates
+- `src/data/contractHistory.js` — prior contract records
+- `src/data/roiData.js` — ROI Calculator inputs and defaults
+- `src/data/vendorContacts.js` — vendor team contact list
 
 ## Success Metrics
 
