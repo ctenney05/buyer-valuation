@@ -81,6 +81,8 @@ Qualification (Aaron) ──► Outreach (Parth) ──► Proposal (Dean) ─�
 - **Renewal assistant (right)** — context-aware chatbot keyed to the renewal (canned replies in demo).
 - **Contacts (right)** — Buyer Renewal Team and Seller Account Team, with a Calendly-style **Schedule-a-call** modal.
 - **Deck teaser (right, conditional)** — compact preview of the Renewals Deck when a proposal exists.
+- **Action Items (currently scaffolded)** — a progress-tracked checklist of pending renewal tasks, each with an owner, due date, and completion state. Surfaced on the Home tab in the current scaffold (`src/components/Home/HomeTab.jsx`); placement in the target 3-column layout is TBD.
+- **Key Dates (currently scaffolded)** — a milestone timeline covering upcoming events (pricing negotiation, budget lock, legal review, renewal deadline). Surfaced on the Home tab in the current scaffold (`src/components/Home/HomeTab.jsx`); placement in the target layout is TBD.
 
 **Documents tab** — grouped document library (Legal & Compliance, Contract History, Product Briefs, Implementation & Support). Contract history (prior contracts with PDFs) is one group. Docs carry a format badge (PDF/DOCX/Link) and tags (Updated / New / Required to sign). Links open externally; files show a transient "Saved" state.
 
@@ -142,7 +144,7 @@ The dashboard is **strict master-detail**, per Evan's 1:1 (Jun 19): *"first I'm 
 
 ## Rollout / Testing
 
-- **Now (demo):** All data is fake (`src/data/`), all actions visual-only. Demo narrative: open on admin pipeline → Uber reads dark, Airbnb engaged → click Airbnb → Stakeholders card first → "Legal just got pulled in two days ago." Each agent dashboard demos as a separately sellable module; dashboards consolidate per customer.
+- **Now (demo):** All data is fake (`src/data/`), all actions visual-only. **Current scaffold is buyer-portal only** — the Admin pipeline and deal-detail view are not yet built (`src/components/Admin/` does not exist). The scaffolded buyer portal has five tabs: Home (renewal banner + metrics + Action Items + Key Dates), Chatbot (canned demo responses), Contract History, ROI Calculator, Vendor Contacts. Target demo narrative once Admin is built: open on admin pipeline → Uber reads dark, Airbnb engaged → click Airbnb → Stakeholders card first → "Legal just got pulled in two days ago." Each agent dashboard demos as a separately sellable module; dashboards consolidate per customer.
 - **Phase 1 — real read data:** Replace `src/data/*` exports with API calls (contract history, order form, ROI inputs, engagement telemetry). No UI change required.
 - **Phase 2 — agent integration:** Wire `qualificationOutput.js` to Aaron's qualification agent; pipe Proposal-agent pricing justification + deck.
 - **Phase 3 — write actions:** Back Quick Renew, scheduling, and document downloads with real services; add auth.
